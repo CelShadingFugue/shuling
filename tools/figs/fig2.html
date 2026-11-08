@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<style>
+  :root{
+    --bg:#FBFAF7; --ink:#23262B; --muted:#6B7078; --line:#DFDCD3;
+    --teal:#2E6F6A; --teal-l:#EAF2F0; --amber:#B5762A; --amber-l:#F8EEE1;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html,body{width:1920px; height:1080px; overflow:hidden;}
+  body{
+    background:var(--bg); color:var(--ink);
+    font-family:"Microsoft YaHei UI","Microsoft YaHei","Segoe UI",sans-serif;
+    padding:52px 76px 44px; display:flex; flex-direction:column; justify-content:space-between;
+  }
+  h1{font-size:46px; font-weight:700; letter-spacing:.5px;}
+  .sub{margin-top:14px; font-size:21px; color:var(--muted);}
+  .sub b{color:var(--teal); font-weight:700;}
+  .sub i{color:var(--amber); font-style:normal; font-weight:700;}
+
+  .band{display:grid; grid-template-columns:repeat(7,1fr); gap:34px; margin-top:30px;}
+  .band div{font-size:17px; font-weight:700; text-align:center; padding:9px 0; border-radius:999px;}
+  .b-teal{background:var(--teal-l); color:var(--teal);}
+  .b-amber{background:var(--amber-l); color:var(--amber);}
+
+  .flow{display:grid; grid-template-columns:repeat(7,1fr); gap:34px; margin-top:12px;}
+  .box{
+    position:relative; background:#fff; border:1.5px solid var(--line); border-radius:14px;
+    height:150px; display:flex; flex-direction:column; align-items:center; justify-content:center;
+    text-align:center; padding:10px;
+  }
+  .box.teal{border-color:#BBD3CF;}
+  .box.amber{border-color:#E4CDA9;}
+  .box .nm{font-size:19px; font-weight:700; line-height:1.4;}
+  .box .tm{margin-top:10px; font-size:14px; color:var(--muted); font-family:"Cascadia Mono",Consolas,monospace;}
+  .box:not(:last-child)::after{
+    content:"→"; position:absolute; right:-30px; top:50%; transform:translateY(-50%);
+    font-size:22px; color:#A9A49A;
+  }
+
+  .clabel{font-size:17px; font-weight:700; color:var(--muted); letter-spacing:1px; margin-bottom:12px;}
+  .vis{display:flex; gap:34px; align-items:stretch;}
+  .vis .box{flex:1; height:110px;}
+  .vis .box .nm{font-size:18px;}
+  .vis .note{flex:0 0 330px; display:flex; align-items:center; font-size:17px; color:var(--muted);
+             line-height:1.6; border-left:2px solid var(--line); padding-left:22px;}
+
+  .body-box{
+    background:#fff; border:1.5px solid var(--teal); border-radius:14px;
+    padding:24px 30px; display:flex; align-items:center; gap:28px;
+  }
+  .body-box .k{font-size:18px; font-weight:700; color:var(--teal); flex:0 0 auto;}
+  .body-box .v{font-size:19px; line-height:1.5;}
+  .body-box .v span{color:var(--muted);}
+
+  .lat{background:#fff; border:1.5px solid var(--line); border-radius:14px; padding:22px 28px 24px;}
+  .lat .t{font-size:20px; font-weight:700;}
+  .lat .t span{font-weight:400; color:var(--muted); font-size:16px; margin-left:14px;}
+  .lat .bar{display:flex; gap:4px; margin-top:16px; height:52px;}
+  .lat .seg{display:flex; align-items:center; justify-content:center; font-size:14px;
+            border-radius:6px; color:var(--ink);}
+  .lat .foot{margin-top:14px; font-size:15px; color:var(--muted);}
+</style>
+</head>
+<body>
+  <div>
+    <h1>一条语音问答，在端和云之间怎么走</h1>
+    <div class="sub"><b>端</b> = 桌上那台树莓派（完整 Linux）　｜　<i>云</i> = 实验室服务或 API　｜　框里的数字是目标耗时预算</div>
+  </div>
+
+  <div>
+    <div class="band">
+      <div class="b-teal" style="grid-column:1 / span 2;">端　听得见</div>
+      <div class="b-amber" style="grid-column:3 / span 4;">云　想得明白</div>
+      <div class="b-teal" style="grid-column:7 / span 1;">端　说得出 / 动得了</div>
+    </div>
+    <div class="flow">
+      <div class="box teal"><div class="nm">麦克风<br>采集</div><div class="tm">0.1 s</div></div>
+      <div class="box teal"><div class="nm">VAD<br>判断有没有人在说</div><div class="tm">0.3 s</div></div>
+      <div class="box amber"><div class="nm">ASR<br>语音转文字</div><div class="tm">0.5 s</div></div>
+      <div class="box amber"><div class="nm">检索<br>RAG 查教材</div><div class="tm">0.2 s</div></div>
+      <div class="box amber"><div class="nm">LLM<br>生成回答</div><div class="tm">0.8 s</div></div>
+      <div class="box amber"><div class="nm">TTS<br>文字转语音</div><div class="tm">0.3 s</div></div>
+      <div class="box teal"><div class="nm">播放<br>+ 动作</div><div class="tm">—</div></div>
+    </div>
+  </div>
+
+  <div>
+    <div class="clabel">视觉支路（第二阶段才进演示，不影响主链路）</div>
+    <div class="vis">
+      <div class="box"><div class="nm">摄像头<br>采集</div></div>
+      <div class="box"><div class="nm">页面检测<br>找到书 / 找到页</div></div>
+      <div class="box"><div class="nm">OCR<br>把字认出来</div></div>
+      <div class="box"><div class="nm">指读定位<br>你指的是哪一段</div></div>
+      <div class="note">→ 输出是结构化的<br>「第几页 + 坐标 + 文字」，<br>直接汇入上面的检索</div>
+    </div>
+  </div>
+
+  <div class="body-box">
+    <div class="k">身体反馈</div>
+    <div class="v">状态机 IDLE / LISTEN / THINK / SPEAK / ERROR 　→　灯环 · 舵机姿态 · 小屏表情
+      <span>（这是“身体”唯一的入口：动作不是装饰，是把内部状态翻译给人看）</span></div>
+  </div>
+
+  <div class="lat">
+    <div class="t">端到端预算 ≈ 2.0 秒<span>目标 P50 &lt; 2.0 s，P90 &lt; 3.5 s；超过 3 秒，人就觉得它“卡住了”</span></div>
+    <div class="bar">
+      <div class="seg" style="flex:1;  background:var(--teal-l);">采集 0.1</div>
+      <div class="seg" style="flex:3;  background:var(--teal-l);">VAD 0.3</div>
+      <div class="seg" style="flex:5;  background:var(--amber-l);">ASR 0.5</div>
+      <div class="seg" style="flex:2;  background:var(--amber-l);">检索 0.2</div>
+      <div class="seg" style="flex:8;  background:var(--amber-l);">LLM 0.8</div>
+      <div class="seg" style="flex:3;  background:var(--amber-l);">TTS 0.3</div>
+    </div>
+    <div class="foot">瓶颈通常就在这两块：LLM 的首 token、TTS 的首包。先量，再优化——这就是第一阶段那张“延迟测试报告”。</div>
+  </div>
+</body>
+</html>

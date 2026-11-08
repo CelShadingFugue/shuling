@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<style>
+  :root{
+    --bg:#FBFAF7; --ink:#23262B; --muted:#6B7078; --line:#DFDCD3;
+    --teal:#2E6F6A; --teal-l:#EAF2F0; --amber:#B5762A; --amber-l:#F8EEE1;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html,body{width:1920px; height:1080px; overflow:hidden;}
+  body{
+    background:var(--bg); color:var(--ink);
+    font-family:"Microsoft YaHei UI","Microsoft YaHei","Segoe UI",sans-serif;
+    padding:54px 76px; display:flex; flex-direction:column;
+  }
+  h1{font-size:46px; font-weight:700; letter-spacing:.5px;}
+  .sub{margin-top:14px; font-size:22px; color:var(--muted);}
+  .main{flex:1 1 auto; display:flex; gap:18px; margin:26px 0 22px; min-height:0;}
+  .labels{width:168px; display:flex; flex-direction:column; flex:0 0 auto;}
+  .labels .spacer{height:120px; flex:0 0 auto;}
+  .labels .cell{flex:1 1 0; display:flex; align-items:center; justify-content:flex-end;
+                font-size:19px; color:var(--muted); padding-right:14px; min-height:0;}
+  .card{position:relative; flex:1 1 0; background:#fff; border:1.5px solid var(--line);
+        border-radius:16px; display:flex; flex-direction:column; min-height:0;}
+  .card.hl{border-color:var(--teal); background:var(--teal-l); box-shadow:0 0 0 1px var(--teal) inset;}
+  .card .hd{height:120px; flex:0 0 auto; padding:20px 24px 0; position:relative;}
+  .card .nm{font-size:23px; font-weight:700;}
+  .card .eg{font-size:15px; color:var(--muted); margin-top:8px;}
+  .card .badge{position:absolute; top:14px; right:18px; font-size:14px; font-weight:700;
+               color:#fff; background:var(--teal); border-radius:999px; padding:5px 12px;}
+  .card .cell{flex:1 1 0; display:flex; align-items:center; justify-content:center;
+              text-align:center; font-size:18px; padding:0 16px; min-height:0;
+              border-top:1px solid var(--line);}
+  .card.hl .cell{border-top-color:#CBDCD9;}
+  .concl{flex:0 0 auto; background:#fff; border:1.5px solid var(--line); border-radius:14px;
+         padding:20px 26px;}
+  .concl .l1{font-size:21px;}
+  .concl b{color:var(--teal);}
+  .concl .l2{margin-top:9px; font-size:16px; color:var(--muted);}
+</style>
+</head>
+<body>
+  <h1>计算谱系：不是一条性能线，是两种设计哲学</h1>
+  <div class="sub">越往右 → 通用性↑　抽象层↑　成本↑　　　｜　　　越往左 → 确定性↑　实时性↑　功耗↓</div>
+
+  <div class="main">
+    <div class="labels">
+      <div class="spacer"></div>
+      <div class="cell">操作系统</div>
+      <div class="cell">内存</div>
+      <div class="cell">开机</div>
+      <div class="cell">功耗</div>
+      <div class="cell">实时性</div>
+      <div class="cell">你写的程序</div>
+    </div>
+
+    <div class="card">
+      <div class="hd"><div class="nm">微控制器　MCU</div><div class="eg">51 / AVR / STM32 / ESP32-S3</div></div>
+      <div class="cell">无（或 FreeRTOS）</div>
+      <div class="cell">KB 级（512&nbsp;KB）</div>
+      <div class="cell">毫秒级</div>
+      <div class="cell">毫瓦级</div>
+      <div class="cell">微秒级、可预测</div>
+      <div class="cell">整个设备的行为</div>
+    </div>
+
+    <div class="card hl">
+      <div class="badge">★ 我们选这个</div>
+      <div class="hd"><div class="nm">单板计算机　SBC</div><div class="eg">树莓派 4 / 5</div></div>
+      <div class="cell">完整 Linux</div>
+      <div class="cell">GB 级</div>
+      <div class="cell">20 – 40 秒</div>
+      <div class="cell">几瓦</div>
+      <div class="cell">毫秒级、不可预测</div>
+      <div class="cell">系统里的一个进程</div>
+    </div>
+
+    <div class="card">
+      <div class="hd"><div class="nm">个人计算机 / 服务器</div><div class="eg">笔记本 / 实验室服务器</div></div>
+      <div class="cell">完整 Linux / Windows</div>
+      <div class="cell">GB – TB 级</div>
+      <div class="cell">十几秒 – 几分钟</div>
+      <div class="cell">几十 – 几百瓦</div>
+      <div class="cell">更差</div>
+      <div class="cell">系统里的一个进程</div>
+    </div>
+  </div>
+
+  <div class="concl">
+    <div class="l1">分水岭不是性能，是 <b>MMU</b>：有它才能跑 Linux、才有进程隔离；ESP32-S3 没有，所以只能跑 FreeRTOS。</div>
+    <div class="l2">再往左还有 FPGA / ASIC —— 把算法直接变成电路，不谈“程序”，谈“布线”。</div>
+  </div>
+</body>
+</html>

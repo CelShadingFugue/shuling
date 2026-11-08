@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# 密钥与环境
+.env
+.env.*
+
+# 系统垃圾
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Office 临时文件
+~$*
+*.tmp
+
+# 日志
+*.log
