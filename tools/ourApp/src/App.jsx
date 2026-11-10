@@ -17,7 +17,7 @@ function place(rect, width, est = 340) {
 }
 
 export default function App() {
-  const { board, commit, undo, reset, canUndo } = useBoard()
+  const { board, commit, undo, reset, replace, canUndo } = useBoard()
   const [selection, setSelection] = useState(() => new Set())
   const [hover, setHover] = useState(null)
   const [theme, setTheme] = useState(() => localStorage.getItem('ourApp.theme') || 'light')
@@ -39,11 +39,33 @@ export default function App() {
     try { localStorage.setItem('ourApp.settings', JSON.stringify(settings)) } catch { /* ignore */ }
   }, [settings])
 
+  const selRef = useRef(selection)
+  selRef.current = selection
+
   useEffect(() => {
-    const onKey = (e) => { if (e.key === 'Escape') { setSelection(new Set()); setHover(null) } }
+    const onKey = (e) => {
+      const tag = (e.target.tagName || '').toLowerCase()
+      if (tag === 'input' || tag === 'textarea') return
+
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
+        e.preventDefault()
+        undo()
+        return
+      }
+      if (e.key === 'Delete' || e.key === 'Backspace') {
+        const ids = [...selRef.current]
+        if (!ids.length) return
+        e.preventDefault()
+        commit((b) => ids.reduce((acc, id) => deleteTask(acc, id), b))
+        setSelection(new Set())
+        setHover(null)
+        return
+      }
+      if (e.key === 'Escape') { setSelection(new Set()); setHover(null) }
+    }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [])
+  }, [commit, undo])
 
   const openTask = useCallback((id, el) => {
     clearTimeout(hideTimer.current)
@@ -62,6 +84,28 @@ export default function App() {
   const group = task ? board.groups.find((g) => g.id === task.groupId) : null
 
   const onToggleMember = (taskId, mid) => commit((b) => toggleDuty(b, taskId, mid))
+
+  const exportJson = () => {
+    const blob = new Blob([JSON.stringify(board, null, 2)], { type: 'application/json' })
+    const a = document.createElement('a')
+    a.href = URL.createObjectURL(blob)
+    a.download = 'board.json'
+    a.click()
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000)
+  }
+
+  const importJson = (file) => {
+    const reader = new FileReader()
+    reader.onload = () => {
+      try {
+        const next = JSON.parse(reader.result)
+        if (!replace(next)) alert('这个文件不像看板数据（缺 groups / tasks）')
+      } catch {
+        alert('读不了这个文件')
+      }
+    }
+    reader.readAsText(file)
+  }
   const onColor = (taskId, color) => commit((b) => updateTask(b, taskId, { color }))
 
   const ids = [...selection]
@@ -94,6 +138,8 @@ export default function App() {
         setSettings={setSettings}
         theme={theme}
         setTheme={setTheme}
+        onExport={exportJson}
+        onImport={importJson}
       />
 
       <Timeline

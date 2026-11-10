@@ -31,10 +31,38 @@ pnpm build    # 打包成 dist/index.html，双击就能开
 | 多选 | `Ctrl + 拖框`，或 `Ctrl + 点卡片` |
 | 批量 | 底部浮条：锁定 / 解锁 / 参与者 / 颜色 / 删除 |
 | 复制粘贴 | `Ctrl+C` 复制选中，鼠标移到目标主任务上 `Ctrl+V` |
-| 撤销 | 顶栏，或 `Ctrl+Z`（我没绑快捷键，见「还没做」） |
+| 删除 | 选中后按 `Delete` 或 `Backspace`，`Ctrl+Z` 撤销 |
+| 取消选择 | 点时间线上没有卡片的地方，或 `Esc` |
 | 主题 | 设置里切：纸白 / 夜间 / 投影 |
 
 锁定（pin）的语义：**锁时间，不锁行**。所以空行压缩永远优先于 pin，不会出现"锁定了一个任务组就永远占着空行"。
+
+
+## 命令行（CLI）
+
+给不想用鼠标的时候用，改的是 `data/board.json`——和网页同一份结构。
+
+```bash
+node make-data.mjs          # 从 src/model/board.js 重新生成 data/board.json
+
+node cli.mjs list           # 所有任务
+node cli.mjs groups         # 所有主线
+node cli.mjs show A1        # 一个任务的详情
+
+node cli.mjs task add --group D --name "标注第一批" --start 2027-03-02 --end 2027-03-16
+node cli.mjs task set A2 --start 2027-03-05 --color c4 --pin
+node cli.mjs task rm A2
+
+node cli.mjs group set A --name "硬件" --color "#B5762A" --collapse
+node cli.mjs group move A up
+
+node cli.mjs duty A2 +2 +3   # 给 A2 加 2、3 号成员
+node cli.mjs who 2           # 2 号参与了什么（负责域）
+node cli.mjs check           # 检查：悬空任务、结束早于开始、同行时间重叠
+```
+
+**网页和 CLI 怎么连起来**：设置面板里有「导出 / 导入」。网页导出 `board.json` → 放进
+`tools/ourApp/data/` → CLI 改 → 网页再导入。`rev` 每次写入 +1，方便以后接 git 同步时对账。
 
 ## 结构
 
@@ -69,12 +97,11 @@ src/
 
 ## 还没做（下一轮）
 
-1. **Ctrl+Z 绑快捷键**（现在只有按钮）。
-2. 卡片详情里直接切 pin。
-3. 组的折叠状态**进配置文件**（你定的：折叠要同步），现在只在内存里。
-4. 同步：GitHub 仓库 + 配置文件（重要共享设置进 git，主题等外观不进）。
-5. 拖拽时把子任务拖出组 → 换组（现在只能用剪切粘贴）。
-6. 日视图的 6 小时刻度对齐（现在能显示，但标签密度还要调）。
+1. 卡片详情里直接切 pin（现在只能悬停卡片右上角或批量条）。
+2. 组的折叠状态**进配置文件**（你定的：折叠要同步），现在只在内存里。
+3. 同步：GitHub 仓库 + 配置文件（重要共享设置进 git，主题等外观不进）。
+4. 拖拽时把子任务拖出组 → 换组（现在只能用剪切粘贴）。
+5. 日视图的 6 小时刻度对齐（现在能显示，但标签密度还要调）。
 
 ## 已知问题
 

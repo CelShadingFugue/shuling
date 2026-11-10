@@ -200,7 +200,13 @@ export default function Timeline({
   }
 
   const onTrackPointerDown = (e) => {
-    if (!e.ctrlKey || e.button !== 0) return
+    if (e.button !== 0) return
+    if (!e.ctrlKey) {
+      // 点在没标签的地方 = 取消选择
+      setSelection(new Set())
+      onCloseTask()
+      return
+    }
     const el = e.currentTarget
     const rect = el.getBoundingClientRect()
     const x0 = e.clientX - rect.left

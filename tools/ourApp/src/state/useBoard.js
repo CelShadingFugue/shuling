@@ -59,6 +59,21 @@ export function useBoard() {
     persist(prev)
   }, [persist])
 
+  const replace = useCallback(
+    (next) => {
+      if (!next || !next.tasks || !next.groups) return false
+      const prev = ref.current
+      const fixed = repairLanes(next)
+      undoStack.current.push(prev)
+      ref.current = fixed
+      setBoard(fixed)
+      setUndoDepth(undoStack.current.length)
+      persist(fixed)
+      return true
+    },
+    [persist]
+  )
+
   const reset = useCallback(() => {
     undoStack.current.push(ref.current)
     ref.current = INITIAL
@@ -67,5 +82,5 @@ export function useBoard() {
     persist(INITIAL)
   }, [persist])
 
-  return { board, commit, undo, reset, canUndo: undoDepth > 0 }
+  return { board, commit, undo, reset, replace, canUndo: undoDepth > 0 }
 }

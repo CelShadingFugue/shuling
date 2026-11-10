@@ -1,7 +1,7 @@
 // 数据与纯操作。所有修改都返回新的 board，不原地改。
 // 下一轮（接 git 同步时）这里换成「仓储」，组件不用动。
 
-import { parse, startOf, add } from './time'
+import { parse, startOf, add } from './time.js'
 
 const T = (id, groupId, name, start, end, extra = {}) => ({
   id, groupId, name, start, end,

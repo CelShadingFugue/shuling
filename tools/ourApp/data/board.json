@@ -1,0 +1,336 @@
+{
+  "rev": 1,
+  "groups": [
+    {
+      "id": "A",
+      "name": "硬件与结构",
+      "color": "#B5762A",
+      "order": 0,
+      "pinned": false,
+      "collapsed": false
+    },
+    {
+      "id": "B",
+      "name": "语音链路",
+      "color": "#2E6F6A",
+      "order": 1,
+      "pinned": false,
+      "collapsed": false
+    },
+    {
+      "id": "C",
+      "name": "知识库",
+      "color": "#6B5B95",
+      "order": 2,
+      "pinned": false,
+      "collapsed": false
+    },
+    {
+      "id": "D",
+      "name": "视觉与数据",
+      "color": "#3C6E9F",
+      "order": 3,
+      "pinned": false,
+      "collapsed": false
+    },
+    {
+      "id": "E",
+      "name": "系统与交付",
+      "color": "#5E7C4A",
+      "order": 4,
+      "pinned": false,
+      "collapsed": false
+    },
+    {
+      "id": "P",
+      "name": "项目管理",
+      "color": "#8A8578",
+      "order": 5,
+      "pinned": false,
+      "collapsed": false
+    }
+  ],
+  "tasks": [
+    {
+      "id": "A1",
+      "groupId": "A",
+      "name": "选型与采购清单",
+      "start": "2026-12-01T00:00",
+      "end": "2027-01-31T23:59",
+      "lane": 0,
+      "order": 0,
+      "pinned": false,
+      "color": "auto"
+    },
+    {
+      "id": "A2",
+      "groupId": "A",
+      "name": "供电与接线",
+      "start": "2027-03-01T00:00",
+      "end": "2027-03-31T23:59",
+      "lane": 0,
+      "order": 0,
+      "pinned": false,
+      "color": "auto"
+    },
+    {
+      "id": "A3",
+      "groupId": "A",
+      "name": "外壳与整机装配",
+      "start": "2027-03-15T00:00",
+      "end": "2027-04-30T23:59",
+      "lane": 1,
+      "order": 0,
+      "pinned": false,
+      "color": "auto"
+    },
+    {
+      "id": "A4",
+      "groupId": "A",
+      "name": "稳定性测试",
+      "start": "2027-05-01T00:00",
+      "end": "2027-05-31T23:59",
+      "lane": 0,
+      "order": 0,
+      "pinned": false,
+      "color": "auto"
+    },
+    {
+      "id": "B1",
+      "groupId": "B",
+      "name": "麦克风与 VAD",
+      "start": "2026-12-01T00:00",
+      "end": "2027-01-31T23:59",
+      "lane": 0,
+      "order": 0,
+      "pinned": false,
+      "color": "auto"
+    },
+    {
+      "id": "B2",
+      "groupId": "B",
+      "name": "ASR 接入",
+      "start": "2026-12-01T00:00",
+      "end": "2026-12-31T23:59",
+      "lane": 1,
+      "order": 0,
+      "pinned": false,
+      "color": "auto"
+    },
+    {
+      "id": "B3",
+      "groupId": "B",
+      "name": "TTS 接入",
+      "start": "2026-12-01T00:00",
+      "end": "2027-01-15T23:59",
+      "lane": 2,
+      "order": 0,
+      "pinned": false,
+      "color": "auto"
+    },
+    {
+      "id": "B5",
+      "groupId": "B",
+      "name": "延迟打点与报告",
+      "start": "2026-12-01T00:00",
+      "end": "2027-02-28T23:59",
+      "lane": 3,
+      "order": 0,
+      "pinned": false,
+      "color": "auto"
+    },
+    {
+      "id": "B4",
+      "groupId": "B",
+      "name": "打断与降级",
+      "start": "2027-05-01T00:00",
+      "end": "2027-05-31T23:59",
+      "lane": 0,
+      "order": 0,
+      "pinned": false,
+      "color": "auto"
+    },
+    {
+      "id": "C1",
+      "groupId": "C",
+      "name": "教材知识点整理",
+      "start": "2026-12-01T00:00",
+      "end": "2027-01-31T23:59",
+      "lane": 0,
+      "order": 0,
+      "pinned": false,
+      "color": "auto"
+    },
+    {
+      "id": "C2",
+      "groupId": "C",
+      "name": "RAG 库搭建",
+      "start": "2026-12-01T00:00",
+      "end": "2027-01-31T23:59",
+      "lane": 1,
+      "order": 0,
+      "pinned": false,
+      "color": "auto"
+    },
+    {
+      "id": "C4",
+      "groupId": "C",
+      "name": "评测集与 badcase",
+      "start": "2026-12-01T00:00",
+      "end": "2027-11-30T23:59",
+      "lane": 2,
+      "order": 0,
+      "pinned": false,
+      "color": "auto"
+    },
+    {
+      "id": "C3",
+      "groupId": "C",
+      "name": "教学策略与提示词",
+      "start": "2027-03-01T00:00",
+      "end": "2027-03-31T23:59",
+      "lane": 0,
+      "order": 0,
+      "pinned": false,
+      "color": "auto"
+    },
+    {
+      "id": "D1",
+      "groupId": "D",
+      "name": "教材页数据集",
+      "start": "2027-03-01T00:00",
+      "end": "2027-04-30T23:59",
+      "lane": 0,
+      "order": 0,
+      "pinned": false,
+      "color": "auto"
+    },
+    {
+      "id": "D2",
+      "groupId": "D",
+      "name": "页面 / 区域检测",
+      "start": "2027-06-01T00:00",
+      "end": "2027-07-31T23:59",
+      "lane": 0,
+      "order": 0,
+      "pinned": false,
+      "color": "auto"
+    },
+    {
+      "id": "D3",
+      "groupId": "D",
+      "name": "OCR 与指读定位",
+      "start": "2027-06-15T00:00",
+      "end": "2027-07-31T23:59",
+      "lane": 1,
+      "order": 0,
+      "pinned": false,
+      "color": "auto"
+    },
+    {
+      "id": "E1",
+      "groupId": "E",
+      "name": "仓库与 README",
+      "start": "2026-12-01T00:00",
+      "end": "2026-12-31T23:59",
+      "lane": 0,
+      "order": 0,
+      "pinned": false,
+      "color": "auto"
+    },
+    {
+      "id": "E2",
+      "groupId": "E",
+      "name": "一键部署",
+      "start": "2027-03-01T00:00",
+      "end": "2027-03-31T23:59",
+      "lane": 0,
+      "order": 0,
+      "pinned": false,
+      "color": "auto"
+    },
+    {
+      "id": "E3",
+      "groupId": "E",
+      "name": "开机自启 / 日志 / 演示机",
+      "start": "2027-03-15T00:00",
+      "end": "2027-04-30T23:59",
+      "lane": 1,
+      "order": 0,
+      "pinned": false,
+      "color": "auto"
+    },
+    {
+      "id": "E4",
+      "groupId": "E",
+      "name": "演示视频与答辩材料",
+      "start": "2027-09-01T00:00",
+      "end": "2027-11-30T23:59",
+      "lane": 0,
+      "order": 0,
+      "pinned": false,
+      "color": "auto"
+    },
+    {
+      "id": "P1",
+      "groupId": "P",
+      "name": "进度与记录",
+      "start": "2026-12-01T00:00",
+      "end": "2027-11-30T23:59",
+      "lane": 0,
+      "order": 0,
+      "pinned": false,
+      "color": "auto"
+    },
+    {
+      "id": "P2",
+      "groupId": "P",
+      "name": "经费与报销",
+      "start": "2026-12-01T00:00",
+      "end": "2027-11-30T23:59",
+      "lane": 1,
+      "order": 0,
+      "pinned": false,
+      "color": "auto"
+    },
+    {
+      "id": "P3",
+      "groupId": "P",
+      "name": "对外对接",
+      "start": "2026-12-01T00:00",
+      "end": "2027-11-30T23:59",
+      "lane": 2,
+      "order": 0,
+      "pinned": false,
+      "color": "auto"
+    },
+    {
+      "id": "P0",
+      "groupId": "P",
+      "name": "第一次组会",
+      "start": "2026-12-07T14:00",
+      "end": "2026-12-07T16:00",
+      "lane": 3,
+      "order": 0,
+      "pinned": false,
+      "color": "auto"
+    }
+  ],
+  "duty": {
+    "A1": [
+      "4"
+    ],
+    "B1": [
+      "3"
+    ],
+    "B2": [
+      "2"
+    ],
+    "B5": [
+      "1"
+    ],
+    "E1": [
+      "4"
+    ]
+  }
+}

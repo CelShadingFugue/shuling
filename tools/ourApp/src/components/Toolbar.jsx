@@ -1,8 +1,9 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { THEMES } from '../model/colors'
 
-export default function Toolbar({ canUndo, onUndo, onReset, settings, setSettings, theme, setTheme }) {
+export default function Toolbar({ canUndo, onUndo, onReset, settings, setSettings, theme, setTheme, onExport, onImport }) {
   const [open, setOpen] = useState(false)
+  const fileRef = useRef(null)
 
   return (
     <header className="top">
@@ -38,7 +39,25 @@ export default function Toolbar({ canUndo, onUndo, onReset, settings, setSetting
               ))}
             </div>
           </div>
-          <div className="set-note">外观设置只存在本机，不进 git。</div>
+          <div className="set-row">
+            <label>数据</label>
+            <div className="segs">
+              <button onClick={onExport}>导出</button>
+              <button onClick={() => fileRef.current && fileRef.current.click()}>导入</button>
+            </div>
+          </div>
+          <input
+            ref={fileRef}
+            type="file"
+            accept="application/json,.json"
+            style={{ display: 'none' }}
+            onChange={(e) => {
+              const f = e.target.files && e.target.files[0]
+              if (f) onImport(f)
+              e.target.value = ''
+            }}
+          />
+          <div className="set-note">外观设置只存在本机；数据可导出给 CLI 改，再导回来。</div>
         </div>
       )}
     </header>
