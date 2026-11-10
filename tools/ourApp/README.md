@@ -28,6 +28,7 @@ pnpm build    # 打包成 dist/index.html，双击就能开
 | 新建 | 行头悬停出现 `＋`；或在空白处用粘贴 |
 | 折叠主任务 | 行头悬停出现 `‹` |
 | 排序主任务 | 行头 `▲▼`，主任务锁定后不可移动 |
+| 时间点 | 在月份下面那条细带里点一下 = 新建；按住拖动 = 跟手落位；Ctrl+拖动 = 横向框选 |
 | 多选 | `Ctrl + 拖框`，或 `Ctrl + 点卡片` |
 | 批量 | 底部浮条：锁定 / 解锁 / 参与者 / 颜色 / 删除 |
 | 复制粘贴 | `Ctrl+C` 复制选中，鼠标移到目标主任务上 `Ctrl+V` |
@@ -55,6 +56,11 @@ node cli.mjs task rm A2
 
 node cli.mjs group set A --name "硬件" --color "#B5762A" --collapse
 node cli.mjs group move A up
+
+node cli.mjs mark ls                     # 时间点
+node cli.mjs mark add --at 2027-03-15T18:00 --name "中期检查"
+node cli.mjs mark set M2 --at 2027-06-01 --name "第二次验收"
+node cli.mjs mark rm M3
 
 node cli.mjs duty A2 +2 +3   # 给 A2 加 2、3 号成员
 node cli.mjs who 2           # 2 号参与了什么（负责域）

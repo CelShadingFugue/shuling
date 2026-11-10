@@ -9,6 +9,6 @@ const ROOT = path.dirname(fileURLToPath(import.meta.url))
 const OUT = path.join(ROOT, 'data', 'board.json')
 
 fs.mkdirSync(path.dirname(OUT), { recursive: true })
-const data = { rev: 1, groups: INITIAL.groups, tasks: INITIAL.tasks, duty: INITIAL.duty }
+const data = { rev: 1, groups: INITIAL.groups, tasks: INITIAL.tasks, duty: INITIAL.duty, milestones: INITIAL.milestones }
 fs.writeFileSync(OUT, JSON.stringify(data, null, 2) + '\n', 'utf8')
 console.log(`✓ ${OUT}  ${data.tasks.length} 个任务 / ${data.groups.length} 条主线`)

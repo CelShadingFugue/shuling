@@ -11,6 +11,10 @@
  *   node cli.mjs group set A --name "硬件" --color "#B5762A" --collapse
  *   node cli.mjs group move A up
  *   node cli.mjs duty A1 +2 -3            给 A1 加 2 号、去掉 3 号
+ *   node cli.mjs mark ls                  列时间点
+ *   node cli.mjs mark add --at 2027-03-15T18:00 --name "中期检查"
+ *   node cli.mjs mark set M2 --name "第二次验收" --at 2027-06-01
+ *   node cli.mjs mark rm M2
  *   node cli.mjs who 2                    2 号成员参与了什么
  *   node cli.mjs check                    检查数据有没有坏
  */
@@ -254,6 +258,46 @@ switch (cmd) {
     else delete db.duty[id]
     dirty = true
     console.log(`✓ ${bold(id)} 参与：${(db.duty[id] || []).map((m) => MEMBERS[m]).join('、') || '无'}`)
+    break
+  }
+
+  case 'mark': {
+    const sub = rest[0]
+    db.milestones = db.milestones || []
+    if (sub === 'ls' || !sub) {
+      if (!db.milestones.length) console.log(dim('还没有时间点'))
+      db.milestones
+        .slice()
+        .sort((a, b) => ts(a.at) - ts(b.at))
+        .forEach((m) => {
+          console.log(`${pad(m.id, 6)} ${pad(fmt(m.at).slice(0, 16), 18)} ${pad(m.name || '未命名', 22)} ${dim(m.color || '')}`)
+        })
+    } else if (sub === 'add') {
+      const at = parseDay(flags.at || flags.on || '')
+      if (!at) fail('要 --at 2027-03-15 或 --at 2027-03-15T18:00')
+      const id = 'M' + (db.milestones.length + 1) + Date.now().toString(36).slice(-2)
+      db.milestones.push({ id, at, name: flags.name || '', color: flags.color || '#23262B', note: flags.note || '' })
+      dirty = true
+      console.log(`✓ 已加 ${bold(id)} ${fmt(at).slice(0, 16)}`)
+    } else if (sub === 'set') {
+      const id = rest[1] || fail('用法：mark set <id> --at/--name/--note/--color')
+      const m = db.milestones.find((x) => x.id === id)
+      if (!m) fail(`没有这个时间点：${id}`)
+      if (flags.at) m.at = parseDay(flags.at)
+      if (flags.name !== undefined) m.name = flags.name
+      if (flags.note !== undefined) m.note = flags.note
+      if (flags.color) m.color = flags.color
+      dirty = true
+      console.log(`✓ 已改 ${bold(id)}`)
+    } else if (sub === 'rm') {
+      const ids = rest.slice(1)
+      if (!ids.length) fail('用法：mark rm <id...>')
+      const before = db.milestones.length
+      db.milestones = db.milestones.filter((m) => !ids.includes(m.id))
+      if (db.milestones.length === before) fail('没删掉任何东西，检查 id')
+      dirty = true
+      console.log(`✓ 删了 ${before - db.milestones.length} 条`)
+    } else fail('mark ls | add | set | rm')
     break
   }
 

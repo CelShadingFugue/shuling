@@ -19,7 +19,10 @@ function load() {
  * 每次 commit 前把上一版推进撤销栈 —— 快照式撤销，对象小，够用。
  */
 export function useBoard() {
-  const [board, setBoard] = useState(() => repairLanes(load() || INITIAL))
+  const [board, setBoard] = useState(() => {
+    const b = load() || INITIAL
+    return repairLanes({ milestones: [], ...b })
+  })
   const ref = useRef(board)
   const undoStack = useRef([])
   const [undoDepth, setUndoDepth] = useState(0)

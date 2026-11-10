@@ -4,11 +4,15 @@ import {
   parse, snapTime, minVisible, weekOrdinalOf, WEEKDAY,
   ticksBetween, minorTicks, guideLabel, fmtDateTime,
 } from '../model/time'
-import { MEMBERS, updateTask, addTask, freeLane, patchGroup, reorderGroup, extract, pasteInto, toISOLocal } from '../model/board'
+import {
+  MEMBERS, updateTask, addTask, freeLane, patchGroup, reorderGroup,
+  extract, pasteInto, toISOLocal, addMilestone, updateMilestone,
+} from '../model/board'
 import { tint } from '../model/tint'
 import PinIcon from './PinIcon'
 
 const HEADER_H = 46
+const BAND_H = 26
 const p2 = (n) => String(n).padStart(2, '0')
 
 function majorLabel(t, level) {
@@ -31,7 +35,8 @@ function minorLabel(t, level) {
 
 export default function Timeline({
   board, commit, selection, setSelection,
-  onOpenTask, onCloseTask, nowLine, dim,
+  markSel, setMarkSel,
+  onOpenTask, onCloseTask, onEditMark, nowLine, dim,
 }) {
   const scrollRef = useRef(null)
   const [viewW, setViewW] = useState(1000)
@@ -39,6 +44,9 @@ export default function Timeline({
   const [level, setLevel] = useState(1)
   const [drag, setDrag] = useState(null)
   const [marquee, setMarquee] = useState(null)
+  const [bandSel, setBandSel] = useState(null)
+  const [markDrag, setMarkDrag] = useState(null)
+  const bandRef = useRef(null)
 
   const pending = useRef(null)
   const hoverGroupRef = useRef(null)
@@ -264,6 +272,91 @@ export default function Timeline({
     return () => window.removeEventListener('keydown', onKey)
   }, [board, selection, commit])
 
+  /* ---------------------------------------------------------- 验收节点（时间点） */
+  const bandTime = useCallback(
+    (clientX) => {
+      const rect = bandRef.current.getBoundingClientRect()
+      return snapTime(tOf(clientX - rect.left), level)
+    },
+    [tOf, level]
+  )
+
+  const onBandDown = (e) => {
+    if (e.button !== 0) return
+    const rect = bandRef.current.getBoundingClientRect()
+    const clampX = (v) => Math.max(0, Math.min(rect.width, v))
+
+    // Ctrl + 拖动 = 只做横向框选（没有纵向维度）
+    if (e.ctrlKey) {
+      const x0 = clampX(e.clientX - rect.left)
+      const move = (ev) => {
+        const x1 = clampX(ev.clientX - rect.left)
+        setBandSel({ x: Math.min(x0, x1), w: Math.abs(x1 - x0) })
+      }
+      const up = (ev) => {
+        window.removeEventListener('pointermove', move)
+        window.removeEventListener('pointerup', up)
+        const x1 = clampX(ev.clientX - rect.left)
+        const a = Math.min(x0, x1)
+        const b = Math.max(x0, x1)
+        setBandSel(null)
+        if (b - a < 4) return
+        const ids = (board.milestones || [])
+          .filter((m) => {
+            const px = (parse(m.at) - CHART_START) * pxPerMs
+            return px >= a && px <= b
+          })
+          .map((m) => m.id)
+        setMarkSel(new Set(ids))
+      }
+      window.addEventListener('pointermove', move)
+      window.addEventListener('pointerup', up)
+      return
+    }
+
+    // 按住 → 线立刻出现并跟手；松开落在哪个刻度就是哪个刻度
+    let at = bandTime(e.clientX)
+    setMarkDrag({ isNew: true, at })
+    const move = (ev) => {
+      at = bandTime(ev.clientX)
+      setMarkDrag({ isNew: true, at })
+    }
+    const up = () => {
+      window.removeEventListener('pointermove', move)
+      window.removeEventListener('pointerup', up)
+      setMarkDrag(null)
+      const next = commit((b) => addMilestone(b, toISOLocal(at)))
+      const ms = next.milestones || []
+      const last = ms[ms.length - 1]
+      if (last) setMarkSel(new Set([last.id]))
+    }
+    window.addEventListener('pointermove', move)
+    window.addEventListener('pointerup', up)
+  }
+
+  const onMarkDown = (e, m) => {
+    if (e.button !== 0) return
+    e.stopPropagation()
+    setMarkSel(new Set([m.id]))
+    const origin = parse(m.at)
+    let at = origin
+    let moved = false
+    const move = (ev) => {
+      at = bandTime(ev.clientX)
+      if (at !== origin) moved = true
+      setMarkDrag({ id: m.id, at })
+    }
+    const up = () => {
+      window.removeEventListener('pointermove', move)
+      window.removeEventListener('pointerup', up)
+      setMarkDrag(null)
+      if (!moved) return
+      commit((b) => updateMilestone(b, m.id, { at: toISOLocal(at) }))
+    }
+    window.addEventListener('pointermove', move)
+    window.addEventListener('pointerup', up)
+  }
+
   /* ---------------------------------------------------------- 刻度 */
   // 可视窗口再往外放一点，边缘的标签才不会突然冒出来
   const pad = LEVELS[level].span * 0.08
@@ -307,13 +400,23 @@ export default function Timeline({
             </div>
           </div>
 
-          <div className="tl-grid" style={{ left: RAIL, width: spanPx, top: HEADER_H }}>
+          <div
+            className="tl-band"
+            ref={bandRef}
+            style={{ left: RAIL, width: spanPx }}
+            onPointerDown={onBandDown}
+            title="点一下加一个时间点 · Ctrl+拖动 = 横向框选"
+          >
+            {bandSel && <div className="band-sel" style={{ left: bandSel.x, width: bandSel.w }} />}
+          </div>
+
+          <div className="tl-grid" style={{ left: RAIL, width: spanPx, top: HEADER_H + BAND_H }}>
             {minors.map((m) => <i key={m.t} className="g-minor" style={{ left: m.px }} />)}
             {majors.map((m) => <i key={m.t} className="g-major" style={{ left: m.px }} />)}
           </div>
 
           {nowLine && now >= CHART_START && now <= CHART_END && (
-            <div className="tl-now" style={{ left: RAIL + xOf(now), top: HEADER_H }}><span>现在</span></div>
+            <div className="tl-now" style={{ left: RAIL + xOf(now), top: HEADER_H + BAND_H }}><span>现在</span></div>
           )}
 
           <div className="tl-rows">
@@ -415,6 +518,32 @@ export default function Timeline({
               )
             })}
           </div>
+
+          {(board.milestones || []).map((m) => {
+            const x = RAIL + xOf(parse(m.at))
+            const sel = markSel.has(m.id)
+            return (
+              <div key={m.id} className={'mk' + (sel ? ' sel' : '')} style={{ left: x, top: HEADER_H }}>
+                <div className="mk-line" style={{ borderLeftColor: m.color }} />
+                <div className="mk-grip" onPointerDown={(e) => onMarkDown(e, m)} />
+                <button
+                  className="mk-label"
+                  style={{ borderColor: m.color, color: m.color }}
+                  onPointerDown={(e) => e.stopPropagation()}
+                  onClick={(e) => onEditMark(m.id, e.currentTarget)}
+                >
+                  {m.name || '未命名'}
+                </button>
+              </div>
+            )
+          })}
+
+          {markDrag && (
+            <div className="mk preview" style={{ left: RAIL + xOf(markDrag.at), top: HEADER_H }}>
+              <div className="mk-line" />
+              <div className="mk-label">{[guideLabel(markDrag.at, level)]}</div>
+            </div>
+          )}
 
           {drag && (
             <>

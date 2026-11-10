@@ -64,6 +64,41 @@ export const DUTY = {
   E1: ['4'],
 }
 
+
+/* ---------------------------------------------------------------- 验收节点（时间点） */
+
+export const MILESTONES = [
+  { id: 'M1', at: '2026-12-31T23:59', name: '第一批提交物', color: '#23262B',
+    note: 'BOM、VAD、ASR、延迟表、仓库 README —— 能交的先交齐。' },
+  { id: 'M2', at: '2027-02-28T23:59', name: '第一次验收 · 软件内核', color: '#23262B',
+    note: '笔记本上连演 5 轮不崩；延迟有分环节的实测数据。' },
+  { id: 'M3', at: '2027-05-31T23:59', name: '第二次验收 · 实体原型', color: '#23262B',
+    note: '装进盒子连演 5 轮不崩；断电重启能自启；拔网线会说“我断网了”。' },
+  { id: 'M4', at: '2027-08-31T23:59', name: '第三次验收 · v0.8', color: '#23262B',
+    note: '指着课本问，3 个场景连演 10 分钟；试用 2–4 周，有 A/B 数据。' },
+  { id: 'M5', at: '2027-11-30T23:59', name: '结题 · v1.0', color: '#23262B',
+    note: '陌生人按 README 一小时装通；视频 + 报告 + 试用数据齐全。' },
+]
+
+export function addMilestone(board, at, name = '') {
+  const id = 'M' + Date.now().toString(36).slice(-4)
+  return {
+    ...board,
+    milestones: [...(board.milestones || []), { id, at, name, color: '#23262B', note: '' }],
+  }
+}
+
+export function updateMilestone(board, id, patch) {
+  return {
+    ...board,
+    milestones: (board.milestones || []).map((m) => (m.id === id ? { ...m, ...patch } : m)),
+  }
+}
+
+export function removeMilestones(board, ids) {
+  return { ...board, milestones: (board.milestones || []).filter((m) => !ids.includes(m.id)) }
+}
+
 /* ---------------------------------------------------------------- 排布 */
 
 export const span = (t) => [parse(t.start), parse(t.end)]
@@ -248,6 +283,7 @@ export const INITIAL = {
   groups: GROUPS,
   tasks: packAll(TASKS),
   duty: DUTY,
+  milestones: MILESTONES,
 }
 
 /** 初始数据按时间先后自动分层，避免同一条线上的卡片互相盖住 */

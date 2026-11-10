@@ -15,3 +15,15 @@ export const THEMES = [
   { id: 'dark', name: '夜间' },
   { id: 'contrast', name: '投影' },
 ]
+
+// 卡片色 token 对应的实色，给“时间点”这种需要直接写颜色的地方用
+export const COLOR_HEX = {
+  c1: '#B5762A',
+  c2: '#2E6F6A',
+  c3: '#6B5B95',
+  c4: '#3C6E9F',
+  c5: '#5E7C4A',
+  c6: '#A95555',
+  c7: '#9A7B4F',
+  c8: '#7A7A72',
+}

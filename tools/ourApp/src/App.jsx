@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { MEMBERS, deleteTask, toggleDuty, updateTask } from './model/board'
+import { MEMBERS, deleteTask, toggleDuty, updateTask, updateMilestone, removeMilestones } from './model/board'
 import { useBoard } from './state/useBoard'
 import Timeline from './components/Timeline'
 import DutyZone from './components/DutyZone'
 import TaskDetail from './components/TaskDetail'
 import BatchBar from './components/BatchBar'
 import Toolbar from './components/Toolbar'
+import MarkEditor from './components/MarkEditor'
 
 function place(rect, width, est = 340) {
   const vw = window.innerWidth
@@ -20,6 +21,8 @@ export default function App() {
   const { board, commit, undo, reset, replace, canUndo } = useBoard()
   const [selection, setSelection] = useState(() => new Set())
   const [hover, setHover] = useState(null)
+  const [markSel, setMarkSel] = useState(() => new Set())
+  const [markEdit, setMarkEdit] = useState(null)
   const [theme, setTheme] = useState(() => localStorage.getItem('ourApp.theme') || 'light')
   const [settings, setSettings] = useState(() => {
     try {
@@ -41,6 +44,8 @@ export default function App() {
 
   const selRef = useRef(selection)
   selRef.current = selection
+  const markSelRef = useRef(markSel)
+  markSelRef.current = markSel
 
   useEffect(() => {
     const onKey = (e) => {
@@ -54,14 +59,19 @@ export default function App() {
       }
       if (e.key === 'Delete' || e.key === 'Backspace') {
         const ids = [...selRef.current]
-        if (!ids.length) return
+        const mids = [...markSelRef.current]
+        if (!ids.length && !mids.length) return
         e.preventDefault()
-        commit((b) => ids.reduce((acc, id) => deleteTask(acc, id), b))
+        commit((b) => {
+          let next = mids.length ? removeMilestones(b, mids) : b
+          return ids.reduce((acc, id) => deleteTask(acc, id), next)
+        })
         setSelection(new Set())
+        setMarkSel(new Set())
         setHover(null)
         return
       }
-      if (e.key === 'Escape') { setSelection(new Set()); setHover(null) }
+      if (e.key === 'Escape') { setSelection(new Set()); setMarkSel(new Set()); setHover(null); setMarkEdit(null) }
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
@@ -147,6 +157,9 @@ export default function App() {
         commit={commit}
         selection={selection}
         setSelection={setSelection}
+        markSel={markSel}
+        setMarkSel={setMarkSel}
+        onEditMark={(id, el) => setMarkEdit({ id, rect: el.getBoundingClientRect() })}
         onOpenTask={openTask}
         onCloseTask={closeTask}
         nowLine={settings.nowLine}
@@ -173,6 +186,28 @@ export default function App() {
           onClear={() => setSelection(new Set())}
         />
       )}
+
+      {markEdit && (() => {
+        const m = (board.milestones || []).find((x) => x.id === markEdit.id)
+        if (!m) return null
+        return (
+          <div
+            className="popover"
+            style={place(markEdit.rect, 280, 300)}
+            onMouseDown={(e) => e.stopPropagation()}
+          >
+            <MarkEditor
+              mark={m}
+              onChange={(patch) => commit((b) => updateMilestone(b, m.id, patch))}
+              onDelete={() => {
+                commit((b) => removeMilestones(b, [m.id]))
+                setMarkEdit(null)
+              }}
+              onClose={() => setMarkEdit(null)}
+            />
+          </div>
+        )
+      })()}
 
       {task && group && (
         <div className="popover" style={place(hover.rect, 330)}
