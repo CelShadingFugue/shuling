@@ -4,6 +4,10 @@ __pycache__/
 .venv/
 venv/
 
+# 前端依赖
+node_modules/
+.vite/
+
 # 密钥与环境
 .env
 .env.*

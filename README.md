@@ -31,7 +31,7 @@
 | [docs/03-分工草案.md](docs/03-分工草案.md) | 五条线细则、接口约定、申请表措辞 | 写完认领表再用它填申请表 |
 | [docs/工作初步分配.xlsx](docs/工作初步分配.xlsx) | **主表**：6 条主线 + 23 件事，每件带一句解释，认领人填数字代号（1峰 2冯 3张 4李） | 会上让他们填 |
 | [docs/工作初步分配-按人.xlsx](docs/工作初步分配-按人.xlsx) | 同一份内容的**按人视图**：一人一列，带独担/共担合计 | 填完数字后跑 `python tools/per_person.py` 重生成 |
-| [docs/分工看板.html](docs/分工看板.html) | 拖拽看板：一件只能一个人；可「只看 12 月」 | 会上投屏，双击打开就行 |
+| [tools/ourApp](tools/ourApp) · [dist/index.html](tools/ourApp/dist/index.html) | **工作台 v0.1**（React）：时间线 + 参与 + 负责域 | 双击 dist 里的 html；改代码看 [项目 README](tools/ourApp/README.md) |
 | `docs/assets/图1-计算谱系.png` | 单片机 / 树莓派 / PC 对照 | 第一讲投影 |
 | `docs/assets/图2-端云协同.png` | 语音链路与端云分工、延迟预算 | 第二讲投影 |
 | `tools/figs/*.html` · `tools/render-figs.ps1` | 图的源码，改字改色后重渲染 | 需要改图时 |

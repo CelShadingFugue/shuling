@@ -1,0 +1,5 @@
+onlyBuiltDependencies:
+  - esbuild
+
+# 依赖树是 pnpm 自己维护的，跑脚本前不必再校验一次
+verifyDepsBeforeRun: false
