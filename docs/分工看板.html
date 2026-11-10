@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>书灵 · 分工看板</title>
+<style>
+  :root{
+    --bg:#FBFAF7; --paper:#FFFFFF; --ink:#23262B; --muted:#6B7078; --line:#E2DFD6;
+    --teal:#2E6F6A; --teal-l:#EAF2F0; --amber:#B5762A; --grey:#8A8578;
+    --lA:#B5762A; --lB:#2E6F6A; --lC:#6B5B95; --lD:#3C6E9F; --lE:#5E7C4A; --lP:#8A8578;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html,body{height:100%;}
+  body{
+    background:var(--bg); color:var(--ink);
+    font-family:"Microsoft YaHei UI","Microsoft YaHei","Segoe UI",system-ui,sans-serif;
+    display:flex; flex-direction:column; overflow:hidden;
+  }
+
+  header{
+    flex:0 0 auto; padding:16px 22px 12px; border-bottom:1px solid var(--line);
+    background:rgba(251,250,247,.92); backdrop-filter:blur(6px); z-index:5;
+  }
+  .hrow{display:flex; align-items:baseline; gap:14px; flex-wrap:wrap;}
+  h1{font-size:19px; font-weight:700; letter-spacing:.3px;}
+  .hint{font-size:12px; color:var(--muted);}
+  .hint b{color:var(--teal); font-weight:600;}
+  .tools{margin-left:auto; display:flex; gap:8px;}
+  button.t{
+    font:inherit; font-size:12px; padding:6px 12px; border-radius:8px; cursor:pointer;
+    border:1px solid var(--line); background:#fff; color:var(--ink);
+  }
+  button.t:hover{border-color:var(--teal); color:var(--teal);}
+  button.t.primary{background:var(--teal); border-color:var(--teal); color:#fff;}
+  button.t.primary:hover{filter:brightness(1.06); color:#fff;}
+
+  .stats{display:flex; gap:18px; margin-top:10px; font-size:12px; color:var(--muted);}
+  .stats b{color:var(--ink); font-weight:700;}
+
+  main{
+    flex:1 1 auto; display:flex; gap:14px; padding:14px 18px 20px;
+    overflow-x:auto; overflow-y:hidden; align-items:stretch;
+  }
+
+  .lane{
+    flex:1 1 0; min-width:250px; display:flex; flex-direction:column;
+    background:var(--paper); border:1px solid var(--line); border-radius:14px;
+    min-height:0;
+  }
+  .lane.pool{flex:0 0 240px; min-width:150px; background:#F7F5EF; border-style:dashed;}
+  .lane.pool.is-empty{flex:0 0 168px;}
+  .lane.over{border-color:var(--teal); box-shadow:0 0 0 3px var(--teal-l);}
+  .lane.pool.over{border-color:var(--amber); box-shadow:0 0 0 3px #F6EBDC;}
+
+  .lhead{flex:0 0 auto; padding:12px 14px 10px; border-bottom:1px solid var(--line);}
+  .lhead .nm{display:flex; align-items:center; gap:8px; font-size:14px; font-weight:700;}
+  .dot{width:8px; height:8px; border-radius:50%; background:var(--teal); flex:0 0 auto;}
+  .lhead .sub{margin-top:6px; font-size:11px; color:var(--muted); display:flex; gap:10px;}
+  .lhead .sub b{color:var(--ink);}
+  .bar{margin-top:8px; height:4px; border-radius:2px; background:#EFEDE6; overflow:hidden;}
+  .bar > i{display:block; height:100%; background:var(--teal); border-radius:2px; transition:width .25s;}
+
+  .lbody{flex:1 1 auto; overflow-y:auto; padding:10px; display:flex; flex-direction:column; gap:8px;}
+  .lbody::-webkit-scrollbar{width:8px;}
+  .lbody::-webkit-scrollbar-thumb{background:#DDD9CE; border-radius:4px;}
+
+  .card{
+    position:relative; background:#fff; border:1px solid var(--line); border-left:3px solid var(--grey);
+    border-radius:9px; padding:8px 9px 8px 10px; cursor:grab; user-select:none;
+    transition:box-shadow .15s, transform .12s, opacity .15s;
+  }
+  .card:hover{box-shadow:0 2px 10px rgba(35,38,43,.08);}
+  .card:active{cursor:grabbing;}
+  .card.dragging{opacity:.35; transform:rotate(1.2deg);}
+  .card.peer{box-shadow:0 0 0 2px #F2C97D;}
+  .card.lineA{border-left-color:var(--lA);} .card.lineB{border-left-color:var(--lB);}
+  .card.lineC{border-left-color:var(--lC);} .card.lineD{border-left-color:var(--lD);}
+  .card.lineE{border-left-color:var(--lE);} .card.lineP{border-left-color:var(--lP);}
+
+  .c1{display:flex; align-items:baseline; gap:7px;}
+  .id{font-size:10px; font-weight:700; color:var(--muted); letter-spacing:.4px; flex:0 0 auto;
+      background:#F3F1EA; border-radius:4px; padding:1px 4px;}
+  .nm{font-size:12.5px; font-weight:600; line-height:1.35; flex:1 1 auto;}
+  .c2{margin-top:4px; font-size:10.5px; color:var(--muted); line-height:1.45;}
+  .c2 .w{color:var(--ink); opacity:.75;}
+  .tag{
+    display:inline-block; margin-top:5px; font-size:9.5px; padding:1px 6px; border-radius:9px;
+    background:#FBF2E0; color:#96652A; border:1px solid #EBD6B4;
+  }
+  .x{
+    position:absolute; top:5px; right:5px; width:18px; height:18px; line-height:16px;
+    border-radius:5px; border:1px solid transparent; background:transparent; color:#B9B4A8;
+    font-size:13px; cursor:pointer; display:none; padding:0;
+  }
+  .card:hover .x{display:block;}
+  .x:hover{background:#F4F1E9; color:#8A2F2F; border-color:var(--line);}
+
+  .empty{
+    margin:auto; text-align:center; font-size:11.5px; color:#B3AEA2; line-height:1.7; padding:20px 10px;
+  }
+
+  /* 输出弹层 */
+  .mask{position:fixed; inset:0; background:rgba(35,38,43,.45); display:none; align-items:center;
+        justify-content:center; z-index:20;}
+  .mask.on{display:flex;}
+  .dlg{background:#fff; border-radius:14px; width:min(760px,90vw); max-height:80vh; display:flex;
+       flex-direction:column; padding:18px 18px 14px;}
+  .dlg h2{font-size:15px; margin-bottom:10px;}
+  .dlg textarea{
+    flex:1 1 auto; min-height:320px; font-family:Consolas,"Cascadia Mono",monospace; font-size:12px;
+    line-height:1.6; border:1px solid var(--line); border-radius:8px; padding:12px; resize:vertical;
+    background:#FCFBF8; color:var(--ink);
+  }
+  .dlg .foot{display:flex; gap:8px; justify-content:flex-end; margin-top:12px;}
+
+  @media print{
+    header .tools, .lane.pool{display:none !important;}
+    main{overflow:visible; height:auto;}
+    body{overflow:visible;}
+    .lbody{overflow:visible;}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="hrow">
+    <h1>书灵 · 分工看板</h1>
+    <span class="hint">拖动卡片到人名那一列 · <b>Shift + 拖</b> = 独占（清掉其他人）· 拖回左边 = 取消 · <b>Ctrl+Z</b> 撤销</span>
+    <div class="tools">
+      <button class="t" id="btnUndo">撤销</button>
+      <button class="t" id="btnReset">回到原方案</button>
+      <button class="t primary" id="btnExport">复制成表格</button>
+    </div>
+  </div>
+  <div class="stats">
+    <span>共 <b id="sTotal">0</b> 项</span>
+    <span>未分配 <b id="sOpen">0</b></span>
+    <span>独担 <b id="sOwn">0</b></span>
+    <span>共担 <b id="sShare">0</b></span>
+    <span style="color:#B3AEA2">左边颜色：A 硬件 · B 语音 · C 知识库 · D 视觉 · E 系统 · P 管理</span>
+  </div>
+</header>
+
+<main>
+  <section class="lane pool" data-person="pool">
+    <div class="lhead">
+      <div class="nm">未分配</div>
+      <div class="sub"><span>拖回这里 = 取消认领</span></div>
+    </div>
+    <div class="lbody" id="body-pool"></div>
+  </section>
+</main>
+
+<div class="mask" id="mask">
+  <div class="dlg">
+    <h2>复制下面这段，粘到群里或文档里</h2>
+    <textarea id="outText" spellcheck="false"></textarea>
+    <div class="foot">
+      <button class="t" id="btnClose">关闭</button>
+      <button class="t primary" id="btnCopy">全选并复制</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ---------------------------------------------------------------- 数据 */
+const PEOPLE = [
+  {c:'1', n:'李金峰'},
+  {c:'2', n:'冯百懋'},
+  {c:'3', n:'张子涵'},
+  {c:'4', n:'李美蓉'},
+];
+
+const TASKS = [
+  {id:'A1', line:'A', nm:'选型与采购清单',   w:'12 月', o:'BOM 表（含 2 个替代型号 + 价格）'},
+  {id:'A2', line:'A', nm:'供电与接线',       w:'3 月',  o:'供电方案 + 接线图 + 实测不掉压'},
+  {id:'A3', line:'A', nm:'外壳与整机装配',   w:'3 月',  o:'3D 文件 2 版 + 装好的整机'},
+  {id:'A4', line:'A', nm:'稳定性测试',       w:'5 月',  o:'稳定性记录（含失败原因）'},
+  {id:'B1', line:'B', nm:'麦克风与 VAD',     w:'12 月', o:'能稳定触发、不误触发的录音片段'},
+  {id:'B2', line:'B', nm:'ASR 接入',         w:'12 月', o:'接通的识别服务 + 10 条测试音频结果'},
+  {id:'B3', line:'B', nm:'TTS 接入',         w:'12 月', o:'接通的合成服务 + 首包耗时'},
+  {id:'B4', line:'B', nm:'打断与降级',       w:'5 月',  o:'打断演示 + 断网演示'},
+  {id:'B5', line:'B', nm:'延迟打点与报告',   w:'12 月', o:'延迟分解表 + 一张分解图'},
+  {id:'C1', line:'C', nm:'教材知识点整理',   w:'12 月', o:'一章知识点清单 + 30 个问答对'},
+  {id:'C2', line:'C', nm:'RAG 库搭建',       w:'12 月', o:'能查到的知识库 + 检索效果抽样'},
+  {id:'C3', line:'C', nm:'教学策略与提示词', w:'3 月',  o:'3 种策略 + 对比样例'},
+  {id:'C4', line:'C', nm:'评测集与 badcase', w:'12 月', o:'20 题评测集 + 每周 badcase 记录'},
+  {id:'D1', line:'D', nm:'教材页数据集',     w:'3 月',  o:'200 张标注好的图'},
+  {id:'D2', line:'D', nm:'页面 / 区域检测',  w:'6 月',  o:'框得对的检测模型 + 准确率'},
+  {id:'D3', line:'D', nm:'OCR 与指读定位',   w:'6 月',  o:'识别结果 + 指读定位演示'},
+  {id:'E1', line:'E', nm:'仓库与 README',    w:'12 月', o:'仓库结构 + README 初版'},
+  {id:'E2', line:'E', nm:'一键部署',         w:'3 月',  o:'install.sh + 陌生人装通记录'},
+  {id:'E3', line:'E', nm:'开机自启 / 日志 / 演示机', w:'3 月', o:'自启服务 + 日志规范 + 演示机镜像'},
+  {id:'E4', line:'E', nm:'演示视频与答辩材料', w:'9 月', o:'演示视频 + 答辩材料'},
+  {id:'P1', line:'P', nm:'周会与进度',       w:'12 月', o:'周会记录（每周一条）'},
+  {id:'P2', line:'P', nm:'经费与报销',       w:'12 月', o:'预算表 + 票据归档'},
+  {id:'P3', line:'P', nm:'对外对接',         w:'12 月', o:'会议记录 + 提交材料清单'},
+];
+
+/* 表格里的原方案（认领表 4–26 行的数字代号） */
+const ORIGINAL = {
+  A1:['4'], A2:['1'], A3:['1'], A4:['3'],
+  B1:['2'], B2:['4'], B3:['3'], B4:['2'], B5:['2'],
+  C1:['1'], C2:['1'], C3:['1'], C4:['1','2','3','4'],
+  D1:['1','2','3','4'], D2:['1','2','3','4'], D3:['1','2','3','4'],
+  E1:['3','4'], E2:['2','3'], E3:['2','4'], E4:['1','2'],
+  P1:['2'], P2:['1','2','3','4'], P3:['1'],
+};
+
+/* ---------------------------------------------------------------- 状态 */
+const KEY = 'shuling.board.v1';
+let state = load() || clone(ORIGINAL);
+let history = [];
+let dragId = null;
+
+function clone(o){ return JSON.parse(JSON.stringify(o)); }
+function load(){
+  try{
+    const raw = localStorage.getItem(KEY);
+    if(!raw) return null;
+    const s = JSON.parse(raw);
+    return (s && typeof s === 'object') ? s : null;
+  }catch(e){ return null; }
+}
+function save(){
+  try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){}
+}
+function snapshot(){
+  history.push(JSON.stringify(state));
+  if(history.length > 60) history.shift();
+}
+
+function who(id){ return state[id] || []; }
+
+/* ---------------------------------------------------------------- 渲染 */
+const main = document.querySelector('main');
+const poolBody = document.getElementById('body-pool');
+
+PEOPLE.forEach(p => {
+  const sec = document.createElement('section');
+  sec.className = 'lane';
+  sec.dataset.person = p.c;
+  sec.innerHTML = `
+    <div class="lhead">
+      <div class="nm"><span class="dot"></span><span>${p.n}</span></div>
+      <div class="sub"><span>独担 <b class="own">0</b></span><span>共担 <b class="share">0</b></span><span>合计 <b class="sum">0</b></span></div>
+      <div class="bar"><i style="width:0%"></i></div>
+    </div>
+    <div class="lbody" id="body-${p.c}"></div>`;
+  main.appendChild(sec);
+});
+
+function makeCard(t, inPool){
+  const el = document.createElement('article');
+  el.className = 'card line' + t.line;
+  el.draggable = true;
+  el.dataset.id = t.id;
+
+  const ids = who(t.id);
+  el.innerHTML = `
+    <div class="c1"><span class="id">${t.id}</span><span class="nm">${t.nm}</span></div>
+    <div class="c2"><span class="w">${t.w}</span> · ${t.o}</div>
+    ${ids.length > 1 ? `<span class="tag">${ids.length} 人共担</span>` : ''}
+    ${inPool ? '' : '<button class="x" title="取消认领">×</button>'}`;
+
+  el.addEventListener('dragstart', e => {
+    dragId = t.id;
+    el.classList.add('dragging');
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', t.id);
+  });
+  el.addEventListener('dragend', () => {
+    el.classList.remove('dragging');
+    document.querySelectorAll('.lane').forEach(l => l.classList.remove('over'));
+  });
+  el.addEventListener('mouseenter', () => {
+    document.querySelectorAll(`.card[data-id="${t.id}"]`).forEach(c => c.classList.add('peer'));
+  });
+  el.addEventListener('mouseleave', () => {
+    document.querySelectorAll(`.card[data-id="${t.id}"]`).forEach(c => c.classList.remove('peer'));
+  });
+
+  const x = el.querySelector('.x');
+  if(x){
+    x.addEventListener('mousedown', e => e.stopPropagation());
+    x.addEventListener('click', e => {
+      e.stopPropagation();
+      snapshot();
+      state[t.id] = who(t.id).filter(c => c !== inPool);
+      if(state[t.id].length === 0) delete state[t.id];
+      render();
+    });
+    x.dataset.owner = inPool;
+  }
+  return el;
+}
+
+function render(){
+  poolBody.innerHTML = '';
+  PEOPLE.forEach(p => { document.getElementById('body-' + p.c).innerHTML = ''; });
+
+  const open = [];
+  TASKS.forEach(t => {
+    const ids = who(t.id);
+    if(ids.length === 0){ open.push(t); return; }
+    ids.forEach(c => {
+      const body = document.getElementById('body-' + c);
+      if(body) body.appendChild(makeCard(t, c));
+    });
+  });
+
+  open.forEach(t => poolBody.appendChild(makeCard(t, 'pool')));
+  document.querySelector('.lane.pool').classList.toggle('is-empty', open.length === 0);
+
+  if(open.length === 0){
+    const d = document.createElement('div');
+    d.className = 'empty';
+    d.innerHTML = '都分完了<br><span style="font-size:10.5px">拖回这里可取消</span>';
+    poolBody.appendChild(d);
+  }
+
+  /* 统计 */
+  let own = 0, share = 0;
+  PEOPLE.forEach(p => {
+    const mine = TASKS.filter(t => who(t.id).includes(p.c));
+    const o = mine.filter(t => who(t.id).length === 1).length;
+    const s = mine.length - o;
+    own += o; share += s;
+    const sec = document.querySelector(`.lane[data-person="${p.c}"]`);
+    sec.querySelector('.own').textContent = o;
+    sec.querySelector('.share').textContent = s;
+    sec.querySelector('.sum').textContent = mine.length;
+    sec.querySelector('.bar > i').style.width = Math.min(100, mine.length / 14 * 100) + '%';
+  });
+
+  document.getElementById('sTotal').textContent = TASKS.length;
+  document.getElementById('sOpen').textContent = open.length;
+  document.getElementById('sOwn').textContent = own;
+  document.getElementById('sShare').textContent = share;
+
+  save();
+}
+
+/* ---------------------------------------------------------------- 拖放 */
+function wireLane(sec){
+  sec.addEventListener('dragover', e => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    sec.classList.add('over');
+  });
+  sec.addEventListener('dragleave', e => {
+    if(!sec.contains(e.relatedTarget)) sec.classList.remove('over');
+  });
+  sec.addEventListener('drop', e => {
+    e.preventDefault();
+    sec.classList.remove('over');
+    const id = dragId || e.dataTransfer.getData('text/plain');
+    if(!id || !TASKS.some(t => t.id === id)) return;
+
+    snapshot();
+    const target = sec.dataset.person;
+
+    if(target === 'pool'){
+      delete state[id];
+    } else if(e.shiftKey){
+      state[id] = [target];
+    } else {
+      const s = new Set(who(id));
+      s.add(target);
+      state[id] = Array.from(s).sort();
+    }
+    render();
+  });
+}
+document.querySelectorAll('.lane').forEach(wireLane);
+
+/* ---------------------------------------------------------------- 工具 */
+document.getElementById('btnUndo').addEventListener('click', () => {
+  if(!history.length) return;
+  state = JSON.parse(history.pop());
+  render();
+});
+
+document.getElementById('btnReset').addEventListener('click', () => {
+  if(!confirm('恢复到表格里的原方案？当前改动会丢掉。')) return;
+  snapshot();
+  state = clone(ORIGINAL);
+  render();
+});
+
+document.addEventListener('keydown', e => {
+  if((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z'){
+    e.preventDefault();
+    document.getElementById('btnUndo').click();
+  }
+});
+
+/* 导出 */
+const mask = document.getElementById('mask');
+const outText = document.getElementById('outText');
+
+document.getElementById('btnExport').addEventListener('click', () => {
+  const lines = [];
+  lines.push('| 人 | 独担 | 共担 | 合计 | 具体事项 |');
+  lines.push('|---|---|---|---|---|');
+  PEOPLE.forEach(p => {
+    const mine = TASKS.filter(t => who(t.id).includes(p.c));
+    const o = mine.filter(t => who(t.id).length === 1).length;
+    const s = mine.length - o;
+    const body = mine.map(t => (who(t.id).length > 1 ? '~' : '') + t.id + ' ' + t.nm).join('、');
+    lines.push(`| ${p.n} | ${o} | ${s} | ${mine.length} | ${body} |`);
+  });
+  const open = TASKS.filter(t => who(t.id).length === 0).map(t => t.id + ' ' + t.nm);
+  lines.push('');
+  lines.push('未分配：' + (open.length ? open.join('、') : '无'));
+  outText.value = lines.join('\n');
+  mask.classList.add('on');
+  outText.focus();
+  outText.select();
+});
+
+document.getElementById('btnClose').addEventListener('click', () => mask.classList.remove('on'));
+mask.addEventListener('click', e => { if(e.target === mask) mask.classList.remove('on'); });
+document.getElementById('btnCopy').addEventListener('click', () => {
+  outText.select();
+  try{ document.execCommand('copy'); }catch(e){}
+  document.getElementById('btnCopy').textContent = '已复制';
+  setTimeout(() => { document.getElementById('btnCopy').textContent = '全选并复制'; }, 1200);
+});
+
+render();
+</script>
+</body>
+</html>
