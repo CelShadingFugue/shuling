@@ -140,7 +140,6 @@ button { font: inherit; color: inherit; }
   z-index: 12;
   display: flex;
   background: var(--surface-2);
-  border-bottom: 1px solid var(--border);
 }
 .tl-corner {
   position: sticky;
@@ -318,13 +317,12 @@ button { font: inherit; color: inherit; }
 
 
 /* ---------------------------------------------------------------- 验收节点 */
-.tl-rows { padding-top: 26px; }
 
 .tl-band {
   position: absolute; top: 46px; height: 26px;
   z-index: 4; cursor: crosshair;
-  background: color-mix(in srgb, var(--surface-2) 70%, transparent);
-  border-bottom: 1px dashed var(--border);
+  background: transparent;
+  border-bottom: 1px solid var(--border);
 }
 .tl-band:hover { background: color-mix(in srgb, var(--primary) 8%, var(--surface-2)); }
 
@@ -335,25 +333,24 @@ button { font: inherit; color: inherit; }
   pointer-events: none;
 }
 
-.mk { position: absolute; bottom: 0; width: 0; z-index: 1; pointer-events: none; }
-.mk-line { position: absolute; top: 0; bottom: 0; width: 0; border-left: 2px dashed #23262b; opacity: 0.75; }
+.mk { position: absolute; bottom: 0; width: 0; z-index: 6; pointer-events: none; }
+.mk-line { position: absolute; top: 0; bottom: 0; width: 0; border-left: 2px dashed #23262b; opacity: 0.7; transition: border-width .1s, opacity .1s; }
+.mk:hover .mk-line { border-left-width: 3px; opacity: 1; }
 .mk.sel .mk-line { border-left-style: solid; opacity: 1; }
 .mk-grip {
-  position: absolute; top: 0; bottom: 0; left: -6px; width: 12px;
+  position: absolute; top: 0; bottom: 0; left: -7px; width: 14px;
   pointer-events: auto; cursor: grab;
 }
 .mk-grip:hover { background: color-mix(in srgb, var(--primary) 12%, transparent); }
-.mk-label {
-  position: absolute; top: 3px; left: 3px;
-  pointer-events: auto; cursor: pointer;
+.mk-tip {
+  position: absolute; top: 3px; left: 4px;
   font-size: 9.5px; line-height: 1.5; white-space: nowrap;
   padding: 0 5px; border-radius: 4px;
-  background: var(--surface); border: 1px solid #23262b; color: #23262b;
-  max-width: 160px; overflow: hidden; text-overflow: ellipsis;
+  background: var(--surface); border: 1px solid var(--primary); color: var(--primary);
+  pointer-events: none;
 }
-.mk-label:hover { background: var(--surface-3); }
 .mk.preview .mk-line { border-left-color: var(--primary); opacity: 1; border-left-style: dashed; }
-.mk.preview .mk-label { border-color: var(--primary); color: var(--primary); pointer-events: none; }
+
 
 /* 节点编辑浮层 */
 .mk-editor { display: flex; flex-direction: column; gap: 8px; width: 260px; }

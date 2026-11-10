@@ -328,7 +328,16 @@ export default function Timeline({
       const next = commit((b) => addMilestone(b, toISOLocal(at)))
       const ms = next.milestones || []
       const last = ms[ms.length - 1]
-      if (last) setMarkSel(new Set([last.id]))
+      if (last) {
+        setMarkSel(new Set([last.id]))
+        const r = bandRef.current.getBoundingClientRect()
+        onEditMark(last.id, {
+          left: r.left + xOf(at) - 40,
+          top: r.top,
+          bottom: r.bottom + 6,
+          right: r.left + xOf(at) + 40,
+        })
+      }
     }
     window.addEventListener('pointermove', move)
     window.addEventListener('pointerup', up)
@@ -381,7 +390,7 @@ export default function Timeline({
     <div className={'tl' + (drag ? ' is-dragging' : '') + (dim ? '' : ' no-dim')}>
       <div className="tl-scroll" ref={scrollRef}>
         <div className="tl-canvas" style={{ width: RAIL + spanPx }}>
-          <div className="tl-head" style={{ height: HEADER_H }}>
+          <div className="tl-head" style={{ height: HEADER_H + BAND_H }}>
             <div className="tl-corner" style={{ width: RAIL }}>
               <span>{LEVELS[level].name}视图</span>
               <em>Ctrl + 滚轮缩放</em>
@@ -525,15 +534,11 @@ export default function Timeline({
             return (
               <div key={m.id} className={'mk' + (sel ? ' sel' : '')} style={{ left: x, top: HEADER_H }}>
                 <div className="mk-line" style={{ borderLeftColor: m.color }} />
-                <div className="mk-grip" onPointerDown={(e) => onMarkDown(e, m)} />
-                <button
-                  className="mk-label"
-                  style={{ borderColor: m.color, color: m.color }}
-                  onPointerDown={(e) => e.stopPropagation()}
-                  onClick={(e) => onEditMark(m.id, e.currentTarget)}
-                >
-                  {m.name || '未命名'}
-                </button>
+                <div
+                  className="mk-grip"
+                  onPointerDown={(e) => onMarkDown(e, m)}
+                  onMouseEnter={(e) => onEditMark(m.id, e.currentTarget)}
+                />
               </div>
             )
           })}
@@ -541,7 +546,7 @@ export default function Timeline({
           {markDrag && (
             <div className="mk preview" style={{ left: RAIL + xOf(markDrag.at), top: HEADER_H }}>
               <div className="mk-line" />
-              <div className="mk-label">{[guideLabel(markDrag.at, level)]}</div>
+              <div className="mk-tip">{guideLabel(markDrag.at, level)}</div>
             </div>
           )}
 

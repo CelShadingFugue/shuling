@@ -159,7 +159,7 @@ export default function App() {
         setSelection={setSelection}
         markSel={markSel}
         setMarkSel={setMarkSel}
-        onEditMark={(id, el) => setMarkEdit({ id, rect: el.getBoundingClientRect() })}
+        onEditMark={(id, elOrRect) => setMarkEdit({ id, rect: elOrRect.getBoundingClientRect ? elOrRect.getBoundingClientRect() : elOrRect })}
         onOpenTask={openTask}
         onCloseTask={closeTask}
         nowLine={settings.nowLine}
@@ -193,7 +193,11 @@ export default function App() {
         return (
           <div
             className="popover"
-            style={place(markEdit.rect, 280, 300)}
+            style={place(
+              { left: markEdit.rect.left, right: markEdit.rect.right, top: markEdit.rect.top, bottom: markEdit.rect.top + 26 },
+              280,
+              300
+            )}
             onMouseDown={(e) => e.stopPropagation()}
           >
             <MarkEditor
