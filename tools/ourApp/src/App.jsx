@@ -1,124 +1,141 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { LINES, PEOPLE, TASKS, MILESTONES } from './data'
-import { useParticipation } from './model/participation'
+import { MEMBERS, deleteTask, toggleDuty, updateTask } from './model/board'
+import { useBoard } from './state/useBoard'
 import Timeline from './components/Timeline'
 import DutyZone from './components/DutyZone'
 import TaskDetail from './components/TaskDetail'
+import BatchBar from './components/BatchBar'
+import Toolbar from './components/Toolbar'
 
-const lineOf = (id) => LINES.find((l) => l.id === id)
-
-/** 弹层贴着鼠标所在的那个元素放，放不下就翻到上面 */
-function place(rect, width, estHeight = 320) {
+function place(rect, width, est = 340) {
   const vw = window.innerWidth
   const vh = window.innerHeight
-  const left = Math.min(Math.max(12, rect.left - 8), vw - width - 12)
+  const left = Math.min(Math.max(10, rect.left - 8), vw - width - 10)
   let top = rect.bottom + 10
-  if (top + estHeight > vh - 12) top = Math.max(12, rect.top - estHeight - 10)
+  if (top + est > vh - 10) top = Math.max(10, rect.top - est - 10)
   return { left, top, width }
 }
 
 export default function App() {
-  const { toggle, reset, participantsOf } = useParticipation()
+  const { board, commit, undo, reset, canUndo } = useBoard()
+  const [selection, setSelection] = useState(() => new Set())
   const [hover, setHover] = useState(null)
-  const timer = useRef(null)
+  const [theme, setTheme] = useState(() => localStorage.getItem('ourApp.theme') || 'light')
+  const [settings, setSettings] = useState(() => {
+    try {
+      return { nowLine: true, dim: true, ...JSON.parse(localStorage.getItem('ourApp.settings') || '{}') }
+    } catch {
+      return { nowLine: true, dim: true }
+    }
+  })
+  const hideTimer = useRef(null)
 
-  const show = useCallback((kind, id, el) => {
-    clearTimeout(timer.current)
-    setHover({ kind, id, rect: el.getBoundingClientRect() })
-  }, [])
-
-  const scheduleHide = useCallback(() => {
-    clearTimeout(timer.current)
-    timer.current = setTimeout(() => setHover(null), 150)
-  }, [])
-
-  const keepOpen = useCallback(() => clearTimeout(timer.current), [])
-
-  // 一滚动就关掉，免得浮层跟着旧坐标乱飘
   useEffect(() => {
-    const onScroll = () => setHover(null)
-    window.addEventListener('scroll', onScroll, true)
-    return () => window.removeEventListener('scroll', onScroll, true)
+    document.documentElement.dataset.theme = theme
+    try { localStorage.setItem('ourApp.theme', theme) } catch { /* ignore */ }
+  }, [theme])
+
+  useEffect(() => {
+    try { localStorage.setItem('ourApp.settings', JSON.stringify(settings)) } catch { /* ignore */ }
+  }, [settings])
+
+  useEffect(() => {
+    const onKey = (e) => { if (e.key === 'Escape') { setSelection(new Set()); setHover(null) } }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
   }, [])
 
-  const task = hover?.kind === 'task' ? TASKS.find((t) => t.id === hover.id) : null
-  const milestone = hover?.kind === 'ms' ? MILESTONES.find((m) => m.id === hover.id) : null
+  const openTask = useCallback((id, el) => {
+    clearTimeout(hideTimer.current)
+    setHover({ id, rect: el.getBoundingClientRect() })
+  }, [])
+
+  const closeTask = useCallback(() => {
+    clearTimeout(hideTimer.current)
+    hideTimer.current = setTimeout(() => setHover(null), 160)
+  }, [])
+
+  const keepOpen = useCallback(() => clearTimeout(hideTimer.current), [])
+
+  const task = hover ? board.tasks.find((t) => t.id === hover.id) : null
+  const group = task ? board.groups.find((g) => g.id === task.groupId) : null
+
+  const onToggleMember = (taskId, mid) => commit((b) => toggleDuty(b, taskId, mid))
+  const onColor = (taskId, color) => commit((b) => updateTask(b, taskId, { color }))
+
+  const ids = [...selection]
+
+  const batchPin = (v) => commit((b) =>
+    ids.reduce((acc, id) => updateTask(acc, id, { pinned: v }), b)
+  )
+  const batchMember = (mid) => commit((b) =>
+    ids.reduce((acc, id) => {
+      const has = (acc.duty[id] || []).includes(mid)
+      return toggleDuty(acc, id, mid)
+    }, b)
+  )
+  const batchColor = (color) => commit((b) =>
+    ids.reduce((acc, id) => updateTask(acc, id, { color }), b)
+  )
+  const batchDelete = () => {
+    commit((b) => ids.reduce((acc, id) => deleteTask(acc, id), b))
+    setSelection(new Set())
+  }
 
   return (
     <div className="app">
-      <header className="top">
-        <div className="brand">
-          <b>ourApp</b>
-          <span>书灵 · 项目工作台</span>
-        </div>
-        <div className="top-hint">
-          卡片悬停看细节 · 点圆点表示“我参与” · 往下滚动是各自的负责域
-        </div>
-        <button type="button" className="btn" onClick={reset}>
-          重置
-        </button>
-      </header>
+      <Toolbar
+        canUndo={canUndo}
+        onUndo={undo}
+        onReset={() => { if (confirm('恢复到初始数据？')) { reset(); setSelection(new Set()) } }}
+        settings={settings}
+        setSettings={setSettings}
+        theme={theme}
+        setTheme={setTheme}
+      />
 
-      <section className="board">
-        <Timeline
-          participantsOf={participantsOf}
-          onOpenTask={(id, el) => show('task', id, el)}
-          onCloseTask={scheduleHide}
-          onOpenMilestone={(id, el) => show('ms', id, el)}
-        />
-      </section>
+      <Timeline
+        board={board}
+        commit={commit}
+        selection={selection}
+        setSelection={setSelection}
+        onOpenTask={openTask}
+        onCloseTask={closeTask}
+        nowLine={settings.nowLine}
+        dim={settings.dim}
+      />
 
       <section className="duties">
         <div className="duties-title">负责域 · 每人参与了什么</div>
         <div className="duties-grid">
-          {PEOPLE.map((p) => (
-            <DutyZone
-              key={p.id}
-              person={p}
-              participantsOf={participantsOf}
-              onOpenTask={(id, el) => show('task', id, el)}
-              onCloseTask={scheduleHide}
-              onLeave={toggle}
-            />
+          {MEMBERS.map((m) => (
+            <DutyZone key={m.id} member={m} board={board} onOpenTask={openTask} onCloseTask={closeTask} />
           ))}
         </div>
       </section>
 
-      <footer className="foot">
-        v0.1 雏形 · 数据写死在 src/data/index.js · 改了以后跑 pnpm build 重新生成
-      </footer>
-
-      {task && (
-        <div
-          className="popover"
-          style={place(hover.rect, 320)}
-          onMouseEnter={keepOpen}
-          onMouseLeave={scheduleHide}
-        >
-          <TaskDetail
-            task={task}
-            line={lineOf(task.line)}
-            participants={participantsOf(task.id)}
-            onToggle={(pid) => toggle(task.id, pid)}
-          />
-        </div>
+      {selection.size > 0 && (
+        <BatchBar
+          count={selection.size}
+          onPin={() => batchPin(true)}
+          onUnpin={() => batchPin(false)}
+          onMember={batchMember}
+          onColor={batchColor}
+          onDelete={batchDelete}
+          onClear={() => setSelection(new Set())}
+        />
       )}
 
-      {milestone && (
-        <div
-          className="popover small"
-          style={place(hover.rect, 300, 200)}
-          onMouseEnter={keepOpen}
-          onMouseLeave={scheduleHide}
-        >
-          <div className="ms-tip">
-            <div className="ms-tip-head">
-              <span className="ms-tip-date">{milestone.short}</span>
-              <span className="ms-tip-title">{milestone.title}</span>
-            </div>
-            <p className="ms-tip-body">{milestone.criteria}</p>
-            <div className="ms-tip-foot">验收标准</div>
-          </div>
+      {task && group && (
+        <div className="popover" style={place(hover.rect, 330)}
+          onMouseEnter={keepOpen} onMouseLeave={closeTask}>
+          <TaskDetail
+            task={task}
+            group={group}
+            duty={board.duty[task.id] || []}
+            onToggle={(mid) => onToggleMember(task.id, mid)}
+            onColor={(c) => onColor(task.id, c)}
+          />
         </div>
       )}
     </div>

@@ -1,50 +1,37 @@
-import { TASKS } from '../data'
+import { MEMBERS } from '../model/board'
+import { parse } from '../model/time'
 
-/**
- * 负责域：一个人参与了哪些事。
- * 卡片只显示名字；悬停时在 App 层弹出同样的 TaskDetail（看起来就是卡片放大）。
- */
-export default function DutyZone({ person, participantsOf, onOpenTask, onCloseTask, onLeave }) {
-  const mine = TASKS.filter((t) => participantsOf(t.id).includes(person.id))
+export default function DutyZone({ member, board, onOpenTask, onCloseTask }) {
+  const mine = board.tasks.filter((t) => (board.duty[t.id] || []).includes(member.id))
 
   return (
     <section className="zone">
       <header className="zone-head">
-        <span className="zone-avatar" style={{ background: person.color }}>
-          {person.short}
-        </span>
-        <span className="zone-name">{person.name}</span>
+        <span className="zone-avatar" style={{ background: member.color }}>{member.short}</span>
+        <span className="zone-name">{member.name}</span>
         <span className="zone-count">{mine.length} 项</span>
       </header>
 
       {mine.length === 0 ? (
-        <div className="zone-empty">
-          还没参与任何工作。在上面时间线的卡片里，点亮自己那个圆点就行。
-        </div>
+        <div className="zone-empty">还没参与任何工作。在时间线的卡片里点亮自己那个圆点。</div>
       ) : (
         <div className="zone-grid">
-          {mine.map((t) => (
-            <div
-              key={t.id}
-              className="dcard"
-              onMouseEnter={(e) => onOpenTask(t.id, e.currentTarget)}
-              onMouseLeave={onCloseTask}
-            >
-              <span className="dcard-id">{t.id}</span>
-              <span className="dcard-name">{t.name}</span>
-              <button
-                type="button"
-                className="dcard-x"
-                title="退出这件工作"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  onLeave(t.id, person.id)
-                }}
+          {mine.map((t) => {
+            const g = board.groups.find((x) => x.id === t.groupId)
+            return (
+              <div
+                key={t.id}
+                className={'dcard' + (t.color !== 'auto' ? ' c-' + t.color : '')}
+                onMouseEnter={(e) => onOpenTask(t.id, e.currentTarget)}
+                onMouseLeave={onCloseTask}
               >
-                ×
-              </button>
-            </div>
-          ))}
+                <i className="dcard-bar" style={{ background: g ? g.color : '#999' }} />
+                <span className="dcard-id">{t.id}</span>
+                <span className="dcard-name">{t.name}</span>
+                <span className="dcard-date">{parse(t.start) ? `${new Date(parse(t.start)).getMonth() + 1}月` : ''}</span>
+              </div>
+            )
+          })}
         </div>
       )}
     </section>
