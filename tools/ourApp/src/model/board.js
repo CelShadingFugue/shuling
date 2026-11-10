@@ -83,17 +83,49 @@ export function normalizeLanes(tasks, groupId) {
   return [...others, ...sorted.map((t) => ({ ...t, lane: map.get(t.lane) }))]
 }
 
-/** 找一个能放下 [start,end] 的空行 */
-export function freeLane(tasks, groupId, start, end, ignoreId) {
+/** 从 from 这一行开始，找一个能放下 [start,end] 的空行（往下让，不往上传） */
+export function freeLane(tasks, groupId, start, end, ignoreId, from = 0) {
   const mine = tasks.filter((t) => t.groupId === groupId && t.id !== ignoreId)
   const probe = { start, end }
-  for (let lane = 0; lane < 40; lane++) {
+  for (let lane = Math.max(0, from); lane < 60; lane++) {
     const busy = mine.some((t) => t.lane === lane && overlap(t, probe))
     if (!busy) return lane
   }
-  return 0
+  return Math.max(0, from)
 }
 
+/**
+ * 读盘时修一次：同一行里时间重叠的任务，往下让。
+ * 防止某次异常的写入把看板永久弄脏。
+ */
+export function repairLanes(board) {
+  const byGroup = {}
+  board.tasks.forEach((t) => {
+    byGroup[t.groupId] = byGroup[t.groupId] || []
+    byGroup[t.groupId].push(t)
+  })
+  let out = []
+  Object.keys(byGroup).forEach((gid) => {
+    const placed = []
+    byGroup[gid]
+      .slice()
+      .sort((a, b) => parse(a.start) - parse(b.start))
+      .forEach((t) => {
+        const s = parse(t.start)
+        const e = parse(t.end)
+        let lane = Math.max(0, t.lane || 0)
+        const busy = (l) => placed.some((p) => p.lane === l && !(e < p.s || s > p.e))
+        while (busy(lane) && lane < 60) lane++
+        placed.push({ lane, s, e })
+        out.push({ ...t, lane })
+      })
+  })
+  let next = { ...board, tasks: out }
+  Object.keys(byGroup).forEach((gid) => {
+    next = { ...next, tasks: normalizeLanes(next.tasks, gid) }
+  })
+  return next
+}
 export function groupRowCount(tasks, groupId) {
   const mine = tasks.filter((t) => t.groupId === groupId)
   return mine.length ? Math.max(...mine.map((t) => t.lane)) + 1 : 1

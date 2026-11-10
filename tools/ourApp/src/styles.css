@@ -243,7 +243,15 @@ button { font: inherit; color: inherit; }
 }
 .chip:hover { box-shadow: 0 3px 10px rgba(35, 38, 43, 0.12); border-color: var(--primary); z-index: 3; }
 .chip.selected { border-color: var(--primary); box-shadow: 0 0 0 2px var(--primary-50); }
-.chip.dragging { z-index: 9; box-shadow: 0 10px 24px rgba(35, 38, 43, 0.28); opacity: 0.95; }
+.chip.dragging {
+  z-index: 40;
+  cursor: grabbing;
+  box-shadow: 0 14px 30px rgba(35, 38, 43, 0.3);
+  outline: 1px solid color-mix(in srgb, var(--primary) 45%, transparent);
+  will-change: transform;
+}
+.tl.is-dragging { user-select: none; }
+.chip { touch-action: none; }
 .chip.hidden { opacity: 0; pointer-events: none; }
 .chip.pinned { cursor: default; background-image: repeating-linear-gradient(45deg, transparent 0 6px, rgba(0, 0, 0, 0.03) 6px 7px); }
 .chip-id { font-size: 9.5px; font-weight: 700; color: var(--text-3); flex: none; }
@@ -272,20 +280,21 @@ button { font: inherit; color: inherit; }
 .guide {
   position: absolute; bottom: 0; width: 0;
   border-left: 1px dashed var(--primary);
-  z-index: 8; pointer-events: none;
+  z-index: 13; pointer-events: none;
 }
 .guide b {
-  position: absolute; top: -17px; left: -1px;
+  position: absolute; top: 5px; left: 3px;
   font-size: 9.5px; color: var(--primary); background: var(--surface);
-  padding: 0 3px; white-space: nowrap; font-weight: 600;
+  border: 1px solid color-mix(in srgb, var(--primary) 30%, transparent);
+  border-radius: 3px; padding: 0 3px; white-space: nowrap; font-weight: 600;
 }
-.guide.end b { left: auto; right: 0; transform: translateX(100%); }
+.guide.end b { left: auto; right: 3px; }
 
 .drag-hint {
-  position: absolute; bottom: 6px; z-index: 9;
-  font-size: 10.5px; color: var(--text-2);
+  position: fixed; left: 50%; bottom: 72px; transform: translateX(-50%); z-index: 58;
+  font-size: 11px; color: var(--text-2);
   background: var(--surface); border: 1px solid var(--border);
-  border-radius: 6px; padding: 3px 8px; white-space: nowrap;
+  border-radius: 7px; padding: 4px 10px; white-space: nowrap;
   box-shadow: var(--shadow);
 }
 .drag-hint em { font-style: normal; color: var(--primary); margin-left: 8px; font-weight: 700; }

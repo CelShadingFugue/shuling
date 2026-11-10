@@ -40,8 +40,6 @@ export default function Timeline({
   const [marquee, setMarquee] = useState(null)
 
   const pending = useRef(null)
-  const dragLive = useRef(null)
-  const pressTimer = useRef(null)
   const hoverGroupRef = useRef(null)
   const pasteAnchor = useRef(Date.now())
 
@@ -103,71 +101,13 @@ export default function Timeline({
     return () => el.removeEventListener('scroll', onScroll)
   }, [])
 
-  /* ---------------------------------------------------------- 拖拽 */
-  const beginDrag = useCallback(
-    (e, task, mode) => {
-      const o = {
-        id: task.id, mode, groupId: task.groupId,
-        clientX: e.clientX, clientY: e.clientY,
-        start: parse(task.start), end: parse(task.end), lane: task.lane,
-      }
-      dragLive.current = o
-      setDrag({ ...o })
+  /* ---------------------------------------------------------- 拖拽：卡片先跟手，松手才吸附 */
+  const dragRef = useRef(null)
 
-      const minSpan = LEVELS[level].span / 60
-
-      const move = (ev) => {
-        const d = dragLive.current
-        if (!d) return
-        const dt = (ev.clientX - d.clientX) / pxPerMs
-        if (d.mode === 'resize') {
-          let end = snapTime(d.end + dt, level)
-          if (end - d.start < minSpan) end = d.start + minSpan
-          d.end = end
-        } else {
-          const dur = d.end - d.start
-          const s = snapTime(d.start + dt, level)
-          d.start = s
-          d.end = s + dur
-          d.lane = Math.max(0, Math.min(30, d.lane + Math.round((ev.clientY - d.clientY) / LANE_H)))
-        }
-        setDrag({ ...d })
-      }
-
-      const up = () => {
-        window.removeEventListener('pointermove', move)
-        window.removeEventListener('pointerup', up)
-        const d = dragLive.current
-        dragLive.current = null
-        setDrag(null)
-        if (!d) return
-        if (d.start === parse(task.start) && d.end === parse(task.end) && d.lane === task.lane) return
-        commit((b) => {
-          const lane = freeLane(b.tasks, d.groupId, d.start, d.end, d.id)
-          return updateTask(b, d.id, {
-            start: toISOLocal(d.start),
-            end: toISOLocal(d.end),
-            lane: d.mode === 'resize' ? lane : Math.max(d.lane, lane),
-          })
-        })
-      }
-
-      window.addEventListener('pointermove', move)
-      window.addEventListener('pointerup', up)
-    },
-    [commit, level, pxPerMs]
-  )
-
-  const clearPress = () => {
-    if (pressTimer.current) {
-      clearTimeout(pressTimer.current)
-      pressTimer.current = null
-    }
-  }
-
-  const onChipPointerDown = (e, task) => {
+  const onChipPointerDown = (e, task, mode = 'move') => {
     if (e.button !== 0) return
     e.stopPropagation()
+
     if (e.ctrlKey || e.metaKey) {
       const next = new Set(selection)
       if (next.has(task.id)) next.delete(task.id)
@@ -175,17 +115,87 @@ export default function Timeline({
       setSelection(next)
       return
     }
-    setSelection(new Set([task.id]))
+
+    if (!selection.has(task.id)) setSelection(new Set([task.id]))
     if (task.pinned) return
-    pressTimer.current = setTimeout(() => {
-      pressTimer.current = null
-      beginDrag(e, task, 'move')
-    }, 240)
-    const cancel = () => {
-      clearPress()
-      window.removeEventListener('pointerup', cancel)
+
+    const el = e.currentTarget.closest('.chip')
+    const rect = el.getBoundingClientRect()
+    const d = {
+      id: task.id,
+      groupId: task.groupId,
+      mode,
+      el,
+      startX: e.clientX,
+      startY: e.clientY,
+      s: parse(task.start),
+      e2: parse(task.end),
+      lane: task.lane,
+      w0: rect.width,
+      moved: false,
+      guide: null,
     }
-    window.addEventListener('pointerup', cancel)
+    dragRef.current = d
+
+    d.move = (ev) => {
+      const dx = ev.clientX - d.startX
+      const dy = ev.clientY - d.startY
+      if (!d.moved) {
+        if (Math.abs(dx) < 3 && Math.abs(dy) < 3) return
+        d.moved = true
+        d.el.classList.add('dragging')
+        setDrag({ id: d.id, start: d.s, end: d.e2, lane: d.lane, mode })
+      }
+      ev.preventDefault()
+
+      if (mode === 'move') {
+        d.el.style.transform = `translate(${dx}px, ${dy}px)`
+        const s = snapTime(d.s + dx / pxPerMs, level)
+        const e2 = s + (d.e2 - d.s)
+        const lane = Math.max(0, Math.min(40, Math.round((d.lane * LANE_H + dy) / LANE_H)))
+        if (!d.guide || d.guide.s !== s || d.guide.lane !== lane) {
+          d.guide = { s, e: e2, lane }
+          setDrag({ id: d.id, start: s, end: e2, lane, mode })
+        }
+      } else {
+        const w = Math.max(14, d.w0 + dx)
+        d.el.style.width = `${w}px`
+        let e2 = snapTime(d.e2 + dx / pxPerMs, level)
+        if (e2 - d.s < 60000) e2 = d.s + 60000
+        if (!d.guide || d.guide.e !== e2) {
+          d.guide = { s: d.s, e: e2, lane: d.lane }
+          setDrag({ id: d.id, start: d.s, end: e2, lane: d.lane, mode })
+        }
+      }
+    }
+
+    d.up = () => {
+      window.removeEventListener('pointermove', d.move)
+      window.removeEventListener('pointerup', d.up)
+      dragRef.current = null
+      setDrag(null)
+      d.el.classList.remove('dragging')
+      d.el.style.transform = ''
+      d.el.style.width = `${d.w0}px`
+
+      if (!d.moved || !d.guide) return
+      const g = d.guide
+      const changed = g.s !== d.s || g.e !== d.e2 || (mode === 'move' && g.lane !== d.lane)
+      if (!changed) return
+
+      commit((b) => {
+        const from = mode === 'resize' ? d.lane : g.lane
+        const lane = freeLane(b.tasks, d.groupId, g.s, g.e, d.id, from)
+        return updateTask(b, d.id, {
+          start: toISOLocal(g.s),
+          end: toISOLocal(g.e),
+          lane,
+        })
+      })
+    }
+
+    window.addEventListener('pointermove', d.move)
+    window.addEventListener('pointerup', d.up)
   }
 
   const onTrackPointerDown = (e) => {
@@ -371,7 +381,7 @@ export default function Timeline({
                           </span>
                           {t.pinned && <span className="pin">📌</span>}
                           {!t.pinned && (
-                            <div className="chip-resize" onPointerDown={(ev) => { ev.stopPropagation(); beginDrag(ev, t, 'resize') }} />
+                            <div className="chip-resize" onPointerDown={(ev) => { ev.stopPropagation(); onChipPointerDown(ev, t, 'resize') }} />
                           )}
                         </div>
                       )
