@@ -77,6 +77,17 @@ export default function App() {
     return () => window.removeEventListener('keydown', onKey)
   }, [commit, undo])
 
+  // 时间点详情：不点外面就不消失
+  useEffect(() => {
+    if (!markEdit) return
+    const onDown = (e) => {
+      if (e.target.closest && (e.target.closest('.mk-editor') || e.target.closest('.mk-grip'))) return
+      setMarkEdit(null)
+    }
+    document.addEventListener('pointerdown', onDown, true)
+    return () => document.removeEventListener('pointerdown', onDown, true)
+  }, [markEdit])
+
   const openTask = useCallback((id, el) => {
     clearTimeout(hideTimer.current)
     setHover({ id, rect: el.getBoundingClientRect() })

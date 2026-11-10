@@ -343,7 +343,15 @@ export default function Timeline({
     window.addEventListener('pointerup', up)
   }
 
+  const dwellRef = useRef(null)
+  const dwellEnter = (m, el) => {
+    clearTimeout(dwellRef.current)
+    dwellRef.current = setTimeout(() => onEditMark(m.id, el), 2000)
+  }
+  const dwellLeave = () => clearTimeout(dwellRef.current)
+
   const onMarkDown = (e, m) => {
+    clearTimeout(dwellRef.current)
     if (e.button !== 0) return
     e.stopPropagation()
     setMarkSel(new Set([m.id]))
@@ -390,7 +398,7 @@ export default function Timeline({
     <div className={'tl' + (drag ? ' is-dragging' : '') + (dim ? '' : ' no-dim')}>
       <div className="tl-scroll" ref={scrollRef}>
         <div className="tl-canvas" style={{ width: RAIL + spanPx }}>
-          <div className="tl-head" style={{ height: HEADER_H + BAND_H }}>
+          <div className="tl-head" style={{ height: HEADER_H }}>
             <div className="tl-corner" style={{ width: RAIL }}>
               <span>{LEVELS[level].name}视图</span>
               <em>Ctrl + 滚轮缩放</em>
@@ -412,7 +420,7 @@ export default function Timeline({
           <div
             className="tl-band"
             ref={bandRef}
-            style={{ left: RAIL, width: spanPx }}
+            style={{ width: spanPx }}
             onPointerDown={onBandDown}
             title="点一下加一个时间点 · Ctrl+拖动 = 横向框选"
           >
@@ -537,7 +545,8 @@ export default function Timeline({
                 <div
                   className="mk-grip"
                   onPointerDown={(e) => onMarkDown(e, m)}
-                  onMouseEnter={(e) => onEditMark(m.id, e.currentTarget)}
+                  onMouseEnter={(e) => dwellEnter(m, e.currentTarget)}
+                  onMouseLeave={dwellLeave}
                 />
               </div>
             )

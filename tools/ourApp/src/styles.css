@@ -319,9 +319,10 @@ button { font: inherit; color: inherit; }
 /* ---------------------------------------------------------------- 验收节点 */
 
 .tl-band {
-  position: absolute; top: 46px; height: 26px;
+  position: relative; height: 26px;
+  margin-left: 128px;
   z-index: 4; cursor: crosshair;
-  background: transparent;
+  background: var(--surface-2);
   border-bottom: 1px solid var(--border);
 }
 .tl-band:hover { background: color-mix(in srgb, var(--primary) 8%, var(--surface-2)); }
