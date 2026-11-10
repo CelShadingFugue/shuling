@@ -89,9 +89,20 @@ export function add(ts, unit, n = 1) {
     case 'week':
       d.setDate(d.getDate() + 7 * n)
       break
-    case 'halfMonth':
-      d.setDate(d.getDate() + 15 * n)
+    case 'halfMonth': {
+      // 半月是「1 号 / 16 号」，不是「加 15 天」——后者会一路漂
+      let k = Math.abs(n)
+      while (k-- > 0) {
+        if (n > 0) {
+          if (d.getDate() === 1) d.setDate(16)
+          else d.setMonth(d.getMonth() + 1, 1)
+        } else {
+          if (d.getDate() === 16) d.setDate(1)
+          else d.setMonth(d.getMonth() - 1, 16)
+        }
+      }
       break
+    }
     case 'month':
       d.setMonth(d.getMonth() + n)
       break
@@ -154,27 +165,31 @@ export function minVisible(level) {
 
 /* ---------------------------------------------------------------- 刻度生成 */
 
-export function ticksBetween(t0, t1, level, pxPerMs) {
+/**
+ * 只生成可视范围内的刻度，但 px 一律是「画布绝对坐标」（从 origin 算起）。
+ * 之前按可视区起点算，一滚动整排刻度就跟着漂，看起来比卡片快一倍。
+ */
+export function ticksBetween(t0, t1, level, pxPerMs, origin) {
   const [mu, mn] = LEVELS[level].major
   const out = []
   let t = startOf(t0, mu)
   t = add(t, mu, -mn)
   let guard = 0
-  while (t <= t1 && guard++ < 600) {
-    out.push({ t, kind: 'major', px: (t - t0) * pxPerMs })
+  while (t <= t1 && guard++ < 800) {
+    out.push({ t, kind: 'major', px: (t - origin) * pxPerMs })
     t = add(t, mu, mn)
   }
   return out
 }
 
-export function minorTicks(t0, t1, level, pxPerMs) {
+export function minorTicks(t0, t1, level, pxPerMs, origin) {
   const [nu, nn] = LEVELS[level].minor
   if (nn * (MS[nu] || MS.day) * pxPerMs < 6) return []
   const out = []
   let t = startOf(t0, nu)
   let guard = 0
   while (t <= t1 && guard++ < 4000) {
-    out.push({ t, px: (t - t0) * pxPerMs })
+    out.push({ t, px: (t - origin) * pxPerMs })
     t = add(t, nu, nn)
   }
   return out

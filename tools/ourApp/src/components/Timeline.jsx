@@ -68,7 +68,7 @@ export default function Timeline({
         const rect = el.getBoundingClientRect()
         const anchorPx = e.clientX - rect.left
         pending.current = { t: tOf(el.scrollLeft + anchorPx - RAIL), anchorPx }
-        const next = Math.max(0, Math.min(LEVELS.length - 1, level + (e.deltaY < 0 ? -1 : 1)))
+        const next = Math.max(0, Math.min(LEVELS.length - 1, level + (e.deltaY < 0 ? 1 : -1)))
         if (next !== level) setLevel(next)
         else pending.current = null
       } else if (e.shiftKey) {
@@ -258,10 +258,12 @@ export default function Timeline({
   }, [board, selection, commit])
 
   /* ---------------------------------------------------------- 刻度 */
-  const tA = tOf(scrollLeft - RAIL)
-  const tB = tOf(scrollLeft + viewW + RAIL)
-  const majors = useMemo(() => ticksBetween(tA, tB, level, pxPerMs), [tA, tB, level, pxPerMs])
-  const minors = useMemo(() => minorTicks(tA, tB, level, pxPerMs), [tA, tB, level, pxPerMs])
+  // 可视窗口再往外放一点，边缘的标签才不会突然冒出来
+  const pad = LEVELS[level].span * 0.08
+  const tA = tOf(scrollLeft - RAIL - pad * pxPerMs)
+  const tB = tOf(scrollLeft + viewW - RAIL + pad * pxPerMs)
+  const majors = useMemo(() => ticksBetween(tA, tB, level, pxPerMs, CHART_START), [tA, tB, level, pxPerMs])
+  const minors = useMemo(() => minorTicks(tA, tB, level, pxPerMs, CHART_START), [tA, tB, level, pxPerMs])
 
   const groups = [...board.groups].sort((a, b) => a.order - b.order)
   const hideShort = minVisible(level)
