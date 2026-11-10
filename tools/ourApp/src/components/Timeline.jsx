@@ -6,6 +6,7 @@ import {
 } from '../model/time'
 import { MEMBERS, updateTask, addTask, freeLane, patchGroup, reorderGroup, extract, pasteInto, toISOLocal } from '../model/board'
 import { tint } from '../model/tint'
+import PinIcon from './PinIcon'
 
 const HEADER_H = 46
 const p2 = (n) => String(n).padStart(2, '0')
@@ -320,13 +321,18 @@ export default function Timeline({
                   style={{ height: g.collapsed ? 14 : laneCount * LANE_H + 12 }}
                   onMouseEnter={() => { hoverGroupRef.current = g.id }}
                   onMouseLeave={() => { if (hoverGroupRef.current === g.id) hoverGroupRef.current = null }}
+                  onMouseMove={(e) => {
+                    const rect = e.currentTarget.getBoundingClientRect()
+                    const x = e.clientX - rect.left - RAIL
+                    if (x > 0) pasteAnchor.current = snapTime(tOf(x), level)
+                  }}
                 >
                   <div className="tl-rail" style={{ width: RAIL }}>
                     <i className="rail-color" style={{ background: g.color }} />
                     <span className="rail-name" title={g.name}>{g.name}</span>
                     <div className="rail-btns">
                       <button title={g.collapsed ? '展开' : '折叠'} onClick={() => commit((b) => patchGroup(b, g.id, { collapsed: !g.collapsed }))}>{g.collapsed ? '›' : '‹'}</button>
-                      <button title="锁定排序" className={g.pinned ? 'on' : ''} onClick={() => commit((b) => patchGroup(b, g.id, { pinned: !g.pinned }))}>📌</button>
+                      <button title={g.pinned ? '已锁定排序' : '锁定排序'} className={g.pinned ? 'on' : ''} onClick={() => commit((b) => patchGroup(b, g.id, { pinned: !g.pinned }))}><PinIcon on={g.pinned} size={11} /></button>
                       {!g.pinned && (
                         <>
                           <button title="上移" onClick={() => commit((b) => reorderGroup(b, g.id, -1))}>▲</button>
@@ -381,7 +387,17 @@ export default function Timeline({
                               <i key={mid} style={{ background: (MEMBERS.find((m) => m.id === mid) || {}).color }} />
                             ))}
                           </span>
-                          {t.pinned && <span className="pin">📌</span>}
+                          <button
+                            className={'chip-pin' + (t.pinned ? ' on' : '')}
+                            title={t.pinned ? '已锁定，点一下解锁' : '锁定这条'}
+                            onPointerDown={(ev) => ev.stopPropagation()}
+                            onClick={(ev) => {
+                              ev.stopPropagation()
+                              commit((b) => updateTask(b, t.id, { pinned: !t.pinned }))
+                            }}
+                          >
+                            <PinIcon on={t.pinned} size={11} />
+                          </button>
                           {!t.pinned && (
                             <div className="chip-resize" onPointerDown={(ev) => { ev.stopPropagation(); onChipPointerDown(ev, t, 'resize') }} />
                           )}

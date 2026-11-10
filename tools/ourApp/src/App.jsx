@@ -51,8 +51,9 @@ export default function App() {
   }, [])
 
   const closeTask = useCallback(() => {
+    // 悬停详情晚一点再收，给鼠标留出「移进去点圆点」的时间
     clearTimeout(hideTimer.current)
-    hideTimer.current = setTimeout(() => setHover(null), 160)
+    hideTimer.current = setTimeout(() => setHover(null), 560)
   }, [])
 
   const keepOpen = useCallback(() => clearTimeout(hideTimer.current), [])
@@ -65,8 +66,9 @@ export default function App() {
 
   const ids = [...selection]
 
-  const batchPin = (v) => commit((b) =>
-    ids.reduce((acc, id) => updateTask(acc, id, { pinned: v }), b)
+  const allPinned = ids.length > 0 && ids.every((id) => (board.tasks.find((t) => t.id === id) || {}).pinned)
+  const batchTogglePin = () => commit((b) =>
+    ids.reduce((acc, id) => updateTask(acc, id, { pinned: !allPinned }), b)
   )
   const batchMember = (mid) => commit((b) =>
     ids.reduce((acc, id) => {
@@ -117,8 +119,8 @@ export default function App() {
       {selection.size > 0 && (
         <BatchBar
           count={selection.size}
-          onPin={() => batchPin(true)}
-          onUnpin={() => batchPin(false)}
+          allPinned={allPinned}
+          onTogglePin={batchTogglePin}
           onMember={batchMember}
           onColor={batchColor}
           onDelete={batchDelete}
