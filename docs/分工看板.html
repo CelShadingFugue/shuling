@@ -33,9 +33,12 @@
   button.t:hover{border-color:var(--teal); color:var(--teal);}
   button.t.primary{background:var(--teal); border-color:var(--teal); color:#fff;}
   button.t.primary:hover{filter:brightness(1.06); color:#fff;}
+  button.t.on{background:var(--teal-l); border-color:var(--teal); color:var(--teal); font-weight:600;}
 
-  .stats{display:flex; gap:18px; margin-top:10px; font-size:12px; color:var(--muted);}
+  .stats{display:flex; gap:18px; margin-top:10px; font-size:12px; color:var(--muted); align-items:center;}
   .stats b{color:var(--ink); font-weight:700;}
+  .stats .sep{color:#D5D1C6;}
+  .stats .legend{color:#B3AEA2;}
 
   main{
     flex:1 1 auto; display:flex; gap:14px; padding:14px 18px 20px;
@@ -44,11 +47,9 @@
 
   .lane{
     flex:1 1 0; min-width:250px; display:flex; flex-direction:column;
-    background:var(--paper); border:1px solid var(--line); border-radius:14px;
-    min-height:0;
+    background:var(--paper); border:1px solid var(--line); border-radius:14px; min-height:0;
   }
-  .lane.pool{flex:0 0 240px; min-width:150px; background:#F7F5EF; border-style:dashed;}
-  .lane.pool.is-empty{flex:0 0 168px;}
+  .lane.pool{flex:0 0 250px; min-width:170px; background:#F7F5EF; border-style:dashed;}
   .lane.over{border-color:var(--teal); box-shadow:0 0 0 3px var(--teal-l);}
   .lane.pool.over{border-color:var(--amber); box-shadow:0 0 0 3px #F6EBDC;}
 
@@ -72,7 +73,6 @@
   .card:hover{box-shadow:0 2px 10px rgba(35,38,43,.08);}
   .card:active{cursor:grabbing;}
   .card.dragging{opacity:.35; transform:rotate(1.2deg);}
-  .card.peer{box-shadow:0 0 0 2px #F2C97D;}
   .card.lineA{border-left-color:var(--lA);} .card.lineB{border-left-color:var(--lB);}
   .card.lineC{border-left-color:var(--lC);} .card.lineD{border-left-color:var(--lD);}
   .card.lineE{border-left-color:var(--lE);} .card.lineP{border-left-color:var(--lP);}
@@ -83,10 +83,6 @@
   .nm{font-size:12.5px; font-weight:600; line-height:1.35; flex:1 1 auto;}
   .c2{margin-top:4px; font-size:10.5px; color:var(--muted); line-height:1.45;}
   .c2 .w{color:var(--ink); opacity:.75;}
-  .tag{
-    display:inline-block; margin-top:5px; font-size:9.5px; padding:1px 6px; border-radius:9px;
-    background:#FBF2E0; color:#96652A; border:1px solid #EBD6B4;
-  }
   .x{
     position:absolute; top:5px; right:5px; width:18px; height:18px; line-height:16px;
     border-radius:5px; border:1px solid transparent; background:transparent; color:#B9B4A8;
@@ -95,11 +91,14 @@
   .card:hover .x{display:block;}
   .x:hover{background:#F4F1E9; color:#8A2F2F; border-color:var(--line);}
 
-  .empty{
-    margin:auto; text-align:center; font-size:11.5px; color:#B3AEA2; line-height:1.7; padding:20px 10px;
+  .empty{margin:auto; text-align:center; font-size:11.5px; color:#B3AEA2; line-height:1.7; padding:20px 10px;}
+
+  /* 只看 12 月 */
+  body.only-dec .card:not(.dec){display:none;}
+  body.only-dec .lane.pool .lhead .nm::after{
+    content:"（只看 12 月）"; font-size:11px; font-weight:400; color:var(--amber);
   }
 
-  /* 输出弹层 */
   .mask{position:fixed; inset:0; background:rgba(35,38,43,.45); display:none; align-items:center;
         justify-content:center; z-index:20;}
   .mask.on{display:flex;}
@@ -126,8 +125,9 @@
 <header>
   <div class="hrow">
     <h1>书灵 · 分工看板</h1>
-    <span class="hint">拖动卡片到人名那一列 · <b>Shift + 拖</b> = 独占（清掉其他人）· 拖回左边 = 取消 · <b>Ctrl+Z</b> 撤销</span>
+    <span class="hint">拖到人名那一列 = 改归属（<b>一件只能一个人</b>）· 拖回左边 = 取消 · <b>Ctrl+Z</b> 撤销</span>
     <div class="tools">
+      <button class="t" id="btnDec">只看 12 月</button>
       <button class="t" id="btnUndo">撤销</button>
       <button class="t" id="btnReset">回到原方案</button>
       <button class="t primary" id="btnExport">复制成表格</button>
@@ -135,10 +135,11 @@
   </div>
   <div class="stats">
     <span>共 <b id="sTotal">0</b> 项</span>
+    <span class="sep">|</span>
+    <span>已认领 <b id="sTaken">0</b></span>
     <span>未分配 <b id="sOpen">0</b></span>
-    <span>独担 <b id="sOwn">0</b></span>
-    <span>共担 <b id="sShare">0</b></span>
-    <span style="color:#B3AEA2">左边颜色：A 硬件 · B 语音 · C 知识库 · D 视觉 · E 系统 · P 管理</span>
+    <span class="sep">|</span>
+    <span class="legend">左边颜色：A 硬件 · B 语音 · C 知识库 · D 视觉 · E 系统 · P 管理</span>
   </div>
 </header>
 
@@ -198,18 +199,17 @@ const TASKS = [
   {id:'P3', line:'P', nm:'对外对接',         w:'12 月', o:'会议记录 + 提交材料清单'},
 ];
 
-/* 表格里的原方案（认领表 4–26 行的数字代号） */
+/* 2026-11-10 的现状：只定 12 月要交的 5 件，一件一个人 */
 const ORIGINAL = {
-  A1:['4'], A2:['1'], A3:['1'], A4:['3'],
-  B1:['2'], B2:['4'], B3:['3'], B4:['2'], B5:['2'],
-  C1:['1'], C2:['1'], C3:['1'], C4:['1','2','3','4'],
-  D1:['1','2','3','4'], D2:['1','2','3','4'], D3:['1','2','3','4'],
-  E1:['3','4'], E2:['2','3'], E3:['2','4'], E4:['1','2'],
-  P1:['2'], P2:['1','2','3','4'], P3:['1'],
+  A1:'4',
+  B1:'3',
+  B2:'2',
+  B5:'1',
+  E1:'4',
 };
 
 /* ---------------------------------------------------------------- 状态 */
-const KEY = 'shuling.board.v1';
+const KEY = 'shuling.board.v2';
 let state = load() || clone(ORIGINAL);
 let history = [];
 let dragId = null;
@@ -228,10 +228,9 @@ function save(){
 }
 function snapshot(){
   history.push(JSON.stringify(state));
-  if(history.length > 60) history.shift();
+  if(history.length > 80) history.shift();
 }
-
-function who(id){ return state[id] || []; }
+function owner(id){ return state[id] || null; }
 
 /* ---------------------------------------------------------------- 渲染 */
 const main = document.querySelector('main');
@@ -244,7 +243,7 @@ PEOPLE.forEach(p => {
   sec.innerHTML = `
     <div class="lhead">
       <div class="nm"><span class="dot"></span><span>${p.n}</span></div>
-      <div class="sub"><span>独担 <b class="own">0</b></span><span>共担 <b class="share">0</b></span><span>合计 <b class="sum">0</b></span></div>
+      <div class="sub"><span>提交物 <b class="sum">0</b></span><span class="dectip">其中 12 月 <b class="dec">0</b></span></div>
       <div class="bar"><i style="width:0%"></i></div>
     </div>
     <div class="lbody" id="body-${p.c}"></div>`;
@@ -253,15 +252,13 @@ PEOPLE.forEach(p => {
 
 function makeCard(t, inPool){
   const el = document.createElement('article');
-  el.className = 'card line' + t.line;
+  el.className = 'card line' + t.line + (t.w === '12 月' ? ' dec' : '');
   el.draggable = true;
   el.dataset.id = t.id;
 
-  const ids = who(t.id);
   el.innerHTML = `
     <div class="c1"><span class="id">${t.id}</span><span class="nm">${t.nm}</span></div>
     <div class="c2"><span class="w">${t.w}</span> · ${t.o}</div>
-    ${ids.length > 1 ? `<span class="tag">${ids.length} 人共担</span>` : ''}
     ${inPool ? '' : '<button class="x" title="取消认领">×</button>'}`;
 
   el.addEventListener('dragstart', e => {
@@ -274,12 +271,6 @@ function makeCard(t, inPool){
     el.classList.remove('dragging');
     document.querySelectorAll('.lane').forEach(l => l.classList.remove('over'));
   });
-  el.addEventListener('mouseenter', () => {
-    document.querySelectorAll(`.card[data-id="${t.id}"]`).forEach(c => c.classList.add('peer'));
-  });
-  el.addEventListener('mouseleave', () => {
-    document.querySelectorAll(`.card[data-id="${t.id}"]`).forEach(c => c.classList.remove('peer'));
-  });
 
   const x = el.querySelector('.x');
   if(x){
@@ -287,11 +278,9 @@ function makeCard(t, inPool){
     x.addEventListener('click', e => {
       e.stopPropagation();
       snapshot();
-      state[t.id] = who(t.id).filter(c => c !== inPool);
-      if(state[t.id].length === 0) delete state[t.id];
+      delete state[t.id];
       render();
     });
-    x.dataset.owner = inPool;
   }
   return el;
 }
@@ -302,16 +291,13 @@ function render(){
 
   const open = [];
   TASKS.forEach(t => {
-    const ids = who(t.id);
-    if(ids.length === 0){ open.push(t); return; }
-    ids.forEach(c => {
-      const body = document.getElementById('body-' + c);
-      if(body) body.appendChild(makeCard(t, c));
-    });
+    const o = owner(t.id);
+    if(!o){ open.push(t); return; }
+    const body = document.getElementById('body-' + o);
+    if(body) body.appendChild(makeCard(t, o));
+    else open.push(t);
   });
-
   open.forEach(t => poolBody.appendChild(makeCard(t, 'pool')));
-  document.querySelector('.lane.pool').classList.toggle('is-empty', open.length === 0);
 
   if(open.length === 0){
     const d = document.createElement('div');
@@ -320,24 +306,20 @@ function render(){
     poolBody.appendChild(d);
   }
 
-  /* 统计 */
-  let own = 0, share = 0;
+  let taken = 0;
   PEOPLE.forEach(p => {
-    const mine = TASKS.filter(t => who(t.id).includes(p.c));
-    const o = mine.filter(t => who(t.id).length === 1).length;
-    const s = mine.length - o;
-    own += o; share += s;
+    const mine = TASKS.filter(t => owner(t.id) === p.c);
+    const dec = mine.filter(t => t.w === '12 月').length;
+    taken += mine.length;
     const sec = document.querySelector(`.lane[data-person="${p.c}"]`);
-    sec.querySelector('.own').textContent = o;
-    sec.querySelector('.share').textContent = s;
     sec.querySelector('.sum').textContent = mine.length;
-    sec.querySelector('.bar > i').style.width = Math.min(100, mine.length / 14 * 100) + '%';
+    sec.querySelector('.dec').textContent = dec;
+    sec.querySelector('.bar > i').style.width = Math.min(100, mine.length / 6 * 100) + '%';
   });
 
   document.getElementById('sTotal').textContent = TASKS.length;
+  document.getElementById('sTaken').textContent = taken;
   document.getElementById('sOpen').textContent = open.length;
-  document.getElementById('sOwn').textContent = own;
-  document.getElementById('sShare').textContent = share;
 
   save();
 }
@@ -360,16 +342,8 @@ function wireLane(sec){
 
     snapshot();
     const target = sec.dataset.person;
-
-    if(target === 'pool'){
-      delete state[id];
-    } else if(e.shiftKey){
-      state[id] = [target];
-    } else {
-      const s = new Set(who(id));
-      s.add(target);
-      state[id] = Array.from(s).sort();
-    }
+    if(target === 'pool') delete state[id];
+    else state[id] = target;     /* 一件只能一个人：直接改归属 */
     render();
   });
 }
@@ -383,10 +357,15 @@ document.getElementById('btnUndo').addEventListener('click', () => {
 });
 
 document.getElementById('btnReset').addEventListener('click', () => {
-  if(!confirm('恢复到表格里的原方案？当前改动会丢掉。')) return;
+  if(!confirm('恢复到 11-10 的方案（只有 12 月那 5 件）？当前改动会丢掉。')) return;
   snapshot();
   state = clone(ORIGINAL);
   render();
+});
+
+document.getElementById('btnDec').addEventListener('click', function(){
+  document.body.classList.toggle('only-dec');
+  this.classList.toggle('on');
 });
 
 document.addEventListener('keydown', e => {
@@ -402,18 +381,17 @@ const outText = document.getElementById('outText');
 
 document.getElementById('btnExport').addEventListener('click', () => {
   const lines = [];
-  lines.push('| 人 | 独担 | 共担 | 合计 | 具体事项 |');
-  lines.push('|---|---|---|---|---|');
+  lines.push('| 人 | 12 月要交 | 其他已认领 | 合计 |');
+  lines.push('|---|---|---|---|');
   PEOPLE.forEach(p => {
-    const mine = TASKS.filter(t => who(t.id).includes(p.c));
-    const o = mine.filter(t => who(t.id).length === 1).length;
-    const s = mine.length - o;
-    const body = mine.map(t => (who(t.id).length > 1 ? '~' : '') + t.id + ' ' + t.nm).join('、');
-    lines.push(`| ${p.n} | ${o} | ${s} | ${mine.length} | ${body} |`);
+    const mine = TASKS.filter(t => owner(t.id) === p.c);
+    const dec = mine.filter(t => t.w === '12 月').map(t => t.id + ' ' + t.nm);
+    const rest = mine.filter(t => t.w !== '12 月').map(t => t.id + ' ' + t.nm);
+    lines.push(`| ${p.n} | ${dec.join('、') || '—'} | ${rest.join('、') || '—'} | ${mine.length} |`);
   });
-  const open = TASKS.filter(t => who(t.id).length === 0).map(t => t.id + ' ' + t.nm);
+  const open = TASKS.filter(t => !owner(t.id)).map(t => t.id + ' ' + t.nm);
   lines.push('');
-  lines.push('未分配：' + (open.length ? open.join('、') : '无'));
+  lines.push('未分配（' + open.length + ' 项）：' + (open.join('、') || '无'));
   outText.value = lines.join('\n');
   mask.classList.add('on');
   outText.focus();
