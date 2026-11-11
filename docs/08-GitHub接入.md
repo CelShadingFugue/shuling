@@ -1,24 +1,27 @@
 # 08 · 接入 GitHub（SSH）
 
-> 现状（2026-11-11 检查）：
+> **状态：已接通**（2026-11-11）
+> - 仓库：<https://github.com/CelShadingFugue/shuling>（Private）
+> - 本机密钥 `~/.ssh/id_ed25519` 已加到 GitHub，`ssh -T git@github.com` 返回 `Hi CelShadingFugue!`
+> - 远端 `origin` 已配好，分支 `main` 已推送
 >
-> - 本机已有密钥 `~/.ssh/id_ed25519`，公钥在下面第 1 步。
-> - **这把钥匙还没加到 GitHub**，`ssh -T git@github.com` 返回 `Permission denied (publickey)`。
-> - 本机没装 `gh` 命令行，所以建仓库用网页。
+> 下面留给**其他人**第一次配置时看。
 
 ---
 
 ## 1. 把公钥加到 GitHub
 
-你机器上的公钥（整行复制，别断行）：
+本机已有密钥 `~/.ssh/id_ed25519`（它同时在连树莓派，可以共用，不用另生成）。
 
-```
-ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEkzPSpjf0tzafgqxczI8+DF5Q3AkXkBU/kLXrf/bm4J fq@DESKTOP-52OR4FT
+查自己的公钥：
+
+```bash
+cat ~/.ssh/id_ed25519.pub
 ```
 
-1. 打开 [https://github.com/settings/keys](https://github.com/settings/keys)
+1. 打开 <https://github.com/settings/keys>
 2. **New SSH key** → Title 随便写（比如 `宿舍台式机`）→ Key 粘贴上面那一整行 → **Add SSH key**
-3. 回终端验证：
+3. 验证：
 
 ```bash
 ssh -T git@github.com
@@ -26,108 +29,74 @@ ssh -T git@github.com
 
 看到 `Hi <你的用户名>! You've successfully authenticated...` 就成了。
 
-> 这把钥匙同时也在连树莓派（`~/.ssh/config` 里的 `rpi` / `rpi-ts`），可以共用，不用另生成。
+> 没有密钥的话先 `ssh-keygen -t ed25519 -C "你的邮箱"`，一路回车。
 
 ---
 
-## 2. 建仓库
+## 2. 克隆仓库
 
-网页操作：[https://github.com/new](https://github.com/new)
-
-| 项              | 建议值                                                       |
-| --------------- | ------------------------------------------------------------ |
-| Repository name | `shuling`（或 `ourApp`）                                 |
-| 可见性          | **Private**（里面有申请表、学号、联系方式）            |
-| 初始化          | **什么都不要勾**（不要 README / .gitignore / license） |
-
-建完它会给你一个地址，形如：
-
+```bash
+git clone git@github.com:CelShadingFugue/shuling.git
+cd shuling
 ```
-git@github.com:<你的用户名>/shuling.git
-```
+
+然后读 `users/<你的名字>/工作指南.md`。
 
 ---
 
-## 3. 连上并推
-
-仓库本地已经提交好了，只差一个远端。把 `<你的用户名>` 和仓库名换成你的：
+## 3. 日常提交
 
 ```bash
-# 分支统一叫 main（GitHub 的默认）
-git branch -M main
-
-# 加远端
-git remote add origin git@github.com:<你的用户名>/shuling.git
-
-# 第一次推
-git push -u origin main
-```
-
-之后每次就是：
-
-```bash
+git pull                 # 先拉，别在旧版本上改
 git add -A
 git commit -m "说明你改了什么"
 git push
 ```
 
+只改自己的文件夹时基本不会冲突；真冲突了，先别硬来，把两边都留着问一声。
+
 ---
 
-## 4. 别人怎么拿到
+## 4. 给别人权限
 
-把仓库地址发给另外三个人，他们：
-
-```bash
-git clone git@github.com:<你的用户名>/shuling.git
-```
-
-然后读 `users/<他们的名字>/工作指南.md`。
-
-如果要给别人开通推送权限：**Settings → Collaborators → Add people**。
-只想让他们看：仓库保持 Private，把链接发给他们并单独授权；或者公开仓库、只让自己 push。
+- **只想让他们看**：保持 Private，在 **Settings → Collaborators** 里邀请，给 Read 权限
+- **要能推送**：同上，给 Write 权限
+- **要公开**：Settings → 最下面 Danger Zone → Change visibility。
+  ⚠️ 公开前必须清掉历史里的个人信息（见第 6 节）
 
 ---
 
 ## 5. 常见问题
 
 **`Permission denied (publickey)`**
-钥匙没加到 GitHub，或者加错了账号。回去做第 1 步，用 `ssh -T git@github.com` 验证。
+钥匙没加到 GitHub，或加到了别的账号。用 `ssh -T git@github.com` 验证。
 
 **`Host key verification failed`**
-第一次连 GitHub 会问 `Are you sure you want to continue connecting?`，输 `yes`。
-不想被问就 `ssh-keyscan github.com >> ~/.ssh/known_hosts`。
+第一次连会问 `Are you sure you want to continue connecting?`，输 `yes`。
+或者 `ssh-keyscan github.com >> ~/.ssh/known_hosts`。
+
+**`src refspec main does not match any`**
+本地还没有 `main`，先 `git branch -M main`。
 
 **推上去发现有大文件 / 密钥**
-
 ```bash
 git rm --cached <文件>
 echo "<文件>" >> .gitignore
 git commit -m "移除误提交的文件"
 ```
 
-**`src refspec main does not match any`**
-本地还没有 `main` 分支，先 `git branch -M main`（把当前的 master 改名）。
-
-**想换一把钥匙**
-
-```bash
-ssh-keygen -t ed25519 -C "your@email" -f ~/.ssh/id_ed25519_github
-```
-
-然后在 `~/.ssh/config` 里加：
-
-```
-Host github.com
-    HostName github.com
-    User git
-    IdentityFile ~/.ssh/id_ed25519_github
-    IdentitiesOnly yes
-```
-
 ---
 
-## 6. 仓库里放了什么（推之前确认一遍）
+## 6. 关于历史里的那份申请表
 
-- ✅ 源码、文档、`dist/ourApp.html`、`data/board.json`
-- ❌ `node_modules/`（已在 `.gitignore`）
-- ⚠️ `卓越班科创活动项目申请表(2).docx` 里有学号和手机号 —— **如果仓库要公开，先把它挪出去或删掉**。
+`卓越班科创活动项目申请表(2).docx`（含学号、手机号）在**前两个提交**里出现过，第 3 个提交把它移出了工作区，所以**当前文件树是干净的，但历史里还有**。
+
+Private 仓库无所谓。**一旦要转公开**，先做一次历史清理：
+
+```bash
+# 需要 git-filter-repo（pip install git-filter-repo）
+git filter-repo --path "卓越班科创活动项目申请表(2).docx" --invert-paths
+git push --force
+```
+
+或者更彻底：新建一个空仓库，只推当前快照（丢历史，最干净）。
