@@ -20,8 +20,10 @@ function load() {
  */
 export function useBoard() {
   const [board, setBoard] = useState(() => {
-    const b = load() || INITIAL
-    return repairLanes({ milestones: [], ...b })
+    const saved = load()
+    if (!saved) return repairLanes(INITIAL)
+    // 老版本存的数据里没有 milestones，补上默认的验收节点
+    return repairLanes({ ...INITIAL, ...saved, milestones: saved.milestones ?? INITIAL.milestones })
   })
   const ref = useRef(board)
   const undoStack = useRef([])

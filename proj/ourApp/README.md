@@ -68,7 +68,7 @@ node cli.mjs check           # 检查：悬空任务、结束早于开始、同�
 ```
 
 **网页和 CLI 怎么连起来**：设置面板里有「导出 / 导入」。网页导出 `board.json` → 放进
-`tools/ourApp/data/` → CLI 改 → 网页再导入。`rev` 每次写入 +1，方便以后接 git 同步时对账。
+`proj/ourApp/data/` → CLI 改 → 网页再导入。`rev` 每次写入 +1，方便以后接 git 同步时对账。
 
 ## 结构
 
