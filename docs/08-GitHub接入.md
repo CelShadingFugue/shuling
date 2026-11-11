@@ -1,6 +1,7 @@
 # 08 · 接入 GitHub（SSH）
 
 > 现状（2026-11-11 检查）：
+>
 > - 本机已有密钥 `~/.ssh/id_ed25519`，公钥在下面第 1 步。
 > - **这把钥匙还没加到 GitHub**，`ssh -T git@github.com` 返回 `Permission denied (publickey)`。
 > - 本机没装 `gh` 命令行，所以建仓库用网页。
@@ -15,7 +16,7 @@
 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEkzPSpjf0tzafgqxczI8+DF5Q3AkXkBU/kLXrf/bm4J fq@DESKTOP-52OR4FT
 ```
 
-1. 打开 <https://github.com/settings/keys>
+1. 打开 [https://github.com/settings/keys](https://github.com/settings/keys)
 2. **New SSH key** → Title 随便写（比如 `宿舍台式机`）→ Key 粘贴上面那一整行 → **Add SSH key**
 3. 回终端验证：
 
@@ -31,13 +32,13 @@ ssh -T git@github.com
 
 ## 2. 建仓库
 
-网页操作：<https://github.com/new>
+网页操作：[https://github.com/new](https://github.com/new)
 
-| 项 | 建议值 |
-|---|---|
-| Repository name | `shuling`（或 `ourApp`） |
-| 可见性 | **Private**（里面有申请表、学号、联系方式） |
-| 初始化 | **什么都不要勾**（不要 README / .gitignore / license） |
+| 项              | 建议值                                                       |
+| --------------- | ------------------------------------------------------------ |
+| Repository name | `shuling`（或 `ourApp`）                                 |
+| 可见性          | **Private**（里面有申请表、学号、联系方式）            |
+| 初始化          | **什么都不要勾**（不要 README / .gitignore / license） |
 
 建完它会给你一个地址，形如：
 
@@ -97,6 +98,7 @@ git clone git@github.com:<你的用户名>/shuling.git
 不想被问就 `ssh-keyscan github.com >> ~/.ssh/known_hosts`。
 
 **推上去发现有大文件 / 密钥**
+
 ```bash
 git rm --cached <文件>
 echo "<文件>" >> .gitignore
@@ -107,9 +109,11 @@ git commit -m "移除误提交的文件"
 本地还没有 `main` 分支，先 `git branch -M main`（把当前的 master 改名）。
 
 **想换一把钥匙**
+
 ```bash
 ssh-keygen -t ed25519 -C "your@email" -f ~/.ssh/id_ed25519_github
 ```
+
 然后在 `~/.ssh/config` 里加：
 
 ```

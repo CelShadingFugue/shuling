@@ -12,23 +12,26 @@
 ## 1. 先找到你自己的位置
 
 ```
-├─ proj/            ← 正式工程。能跑的东西才进这里
+├─ proj/            ← 交付物。跑通、验过、能直接拼进最终作品的东西才进
+├─ tools/
+│   ├─ ourApp/      ← 我们自己用的工作台（时间线 / 参与 / 负责域）
+│   └─ *.html        ← 画图之类的小零碎
 ├─ users/           ← 每个人的工作区（只改自己那一格）
 │   ├─ 李金峰/
 │   ├─ 冯百懋/
 │   ├─ 张子涵/
 │   └─ 李美蓉/
-├─ docs/            ← 设计与规则文档
-├─ tools/           ← 零碎小工具（画图脚本等）
-└─ 卓越班科创活动项目申请表(2).docx
+└─ docs/            ← 设计与规则文档
 ```
 
 | 文件夹 | 是什么 | 你能改吗 |
 |---|---|---|
-| `proj/ourApp` | 公共工作台（时间线 / 参与 / 负责域），带 CLI | 跑通了才搬进来，平时别直接改 |
-| `users/<你的名字>` | 你的实验田：工程副本、笔记、半成品 | **只能改自己的** |
+| `proj/` | **交付物**：硬件、固件、视觉、知识库、文档。进这里 = 对外可展示 | 验过才放，平时别在这儿试错 |
+| `tools/ourApp/` | 我们自己用的工作台（时间线 / 参与 / 负责域），带 CLI | 跑通了才搬回来，平时别直接改 |
+| `users/<你的名字>/` | 你的实验田：工程副本、笔记、半成品 | **只能改自己的** |
 | `docs/` | 项目基线、交互设计、配色、分工 | 提建议，别自己改 |
-| `tools/` | 画图之类的小脚本 | 可以加 |
+
+`proj/` 不是工作区，是展台——规则在 [`proj/README.md`](proj/README.md)。
 
 **你的工作指南在 `users/<你的名字>/工作指南.md`** —— 里面写了你负责哪条线、这周做什么、怎么跑、怎么搬回来。先读那个。
 
@@ -36,7 +39,7 @@
 
 ## 2. 打开工作台（不用装任何东西）
 
-双击 **`proj/ourApp/dist/ourApp.html`**。
+双击 **`tools/ourApp/dist/ourApp.html`**。
 
 它是打包好的单文件，React、样式、数据全在一个 HTML 里，双击就能用，不需要服务器、不需要 Node。
 发给别人也是发这一个文件。
@@ -97,7 +100,7 @@ node -v && pnpm -v
 ### 开发
 
 ```bash
-cd proj/ourApp
+cd tools/ourApp
 pnpm install
 pnpm dev          # 浏览器打开 http://localhost:5173
 ```
@@ -115,7 +118,7 @@ node build.mjs    # 生成 dist/ourApp.html
 ### 目录
 
 ```
-proj/ourApp/
+tools/ourApp/
 ├─ src/
 │  ├─ model/       time.js（刻度）  board.js（数据与操作）  notes.js  colors.js
 │  ├─ state/       useBoard.js（唯一写入口 + 撤销 + 本地存储）
@@ -158,7 +161,7 @@ node cli.mjs check                         # 检查数据有没有坏
 ## 6. 协作规则
 
 1. **改自己的**：`users/<你>/`。想怎么试都行，坏了不影响别人。
-2. **跑通才搬**：确认能用，再整块搬到 `proj/`，然后在群里说一句「我改了 X，搬进 proj 了」。
+2. **跑通才搬**：改工作台 → 搬回 `tools/ourApp/`；做交付物 → 搬进 `proj/`。搬之前群里说一句「我改了 X，搬回来了 / 进 proj 了」。
 3. **搬之前自检**：`node cli.mjs check` 通过、`node build.mjs` 通过、双击 `dist/ourApp.html` 能开。
 4. **看别人的可以，改别人的不行**。
 5. **不要提交** `node_modules/`；**不要写**密码和 key。
@@ -166,8 +169,8 @@ node cli.mjs check                         # 检查数据有没有坏
 搬运命令（Windows）：
 
 ```bash
-robocopy ..\..\proj\ourApp .\ourApp /E /XD node_modules   # 拉一份到自己这
-robocopy .\ourApp ..\..\proj\ourApp /E /XD node_modules   # 改好了搬回去
+robocopy ..\..\tools\ourApp .\ourApp /E /XD node_modules   # 拉一份到自己这
+robocopy .\ourApp ..\..\tools\ourApp /E /XD node_modules   # 改好了搬回去
 ```
 
 ---
