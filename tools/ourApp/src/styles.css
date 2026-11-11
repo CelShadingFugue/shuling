@@ -451,6 +451,14 @@ button { font: inherit; color: inherit; }
 .sw.auto { background: linear-gradient(135deg, #fff 45%, var(--text-3) 46%, var(--text-3) 54%, #fff 55%); }
 .sw.on { outline: 2px solid var(--primary); outline-offset: 1px; }
 
+/* ---------------------------------------------------------------- 提示条 */
+.toast {
+  position: fixed; left: 50%; bottom: 70px; transform: translateX(-50%);
+  z-index: 58; padding: 7px 14px; border-radius: 8px;
+  background: #23262b; color: #fff; font-size: 12px;
+  box-shadow: var(--shadow); animation: pop 0.14s ease-out;
+}
+
 /* ---------------------------------------------------------------- 批量条 */
 .batchbar {
   position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%);

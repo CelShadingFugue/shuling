@@ -199,12 +199,41 @@ export function addTask(board, groupId, start, end, name = '新任务') {
   return { board: withTasks(board, [...board.tasks, task], groupId), id }
 }
 
+
+/**
+ * 重新排这一组的行：按现有的上下顺序，能并到上面的就并上去。
+ * 只用在「删掉东西」之后——手动拖过的位置不该被自动改。
+ */
+export function repackGroup(board, groupId) {
+  const mine = board.tasks
+    .filter((t) => t.groupId === groupId)
+    .sort((a, b) => a.lane - b.lane || parse(a.start) - parse(b.start))
+  const rows = []
+  const packed = mine.map((t) => {
+    const s = parse(t.start)
+    const e = parse(t.end)
+    let lane = 0
+    while (rows[lane] && rows[lane].some((x) => !(e < x.s || s > x.e))) lane++
+    rows[lane] = rows[lane] || []
+    rows[lane].push({ s, e })
+    return { ...t, lane }
+  })
+  return { ...board, tasks: [...board.tasks.filter((t) => t.groupId !== groupId), ...packed] }
+}
+
+/** 把所有组都整理一遍：空出来的行让上面的任务填掉 */
+export function repackAll(board) {
+  return board.groups.reduce((acc, g) => repackGroup(acc, g.id), board)
+}
+
 export function deleteTask(board, id) {
   const t = board.tasks.find((x) => x.id === id)
   if (!t) return board
   const duty = { ...board.duty }
   delete duty[id]
-  return { ...board, duty, tasks: normalizeLanes(board.tasks.filter((x) => x.id !== id), t.groupId) }
+  const left = { ...board, duty, tasks: board.tasks.filter((x) => x.id !== id) }
+  // 删完一重排：空出来的行会被上面的任务填掉，组不会一直那么高
+  return repackGroup(left, t.groupId)
 }
 
 export function toggleDuty(board, taskId, memberId) {

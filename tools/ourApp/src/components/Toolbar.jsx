@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react'
 import { THEMES } from '../model/colors'
 
-export default function Toolbar({ canUndo, onUndo, onReset, settings, setSettings, theme, setTheme, onExport, onImport }) {
+export default function Toolbar({ canUndo, onUndo, onReset, settings, setSettings, theme, setTheme, onExport, onImport, onTidy }) {
   const [open, setOpen] = useState(false)
   const fileRef = useRef(null)
 
@@ -38,6 +38,10 @@ export default function Toolbar({ canUndo, onUndo, onReset, settings, setSetting
                 <button key={t.id} className={theme === t.id ? 'on' : ''} onClick={() => setTheme(t.id)}>{t.name}</button>
               ))}
             </div>
+          </div>
+          <div className="set-row">
+            <label>行</label>
+            <button className="btn" onClick={onTidy} title="把空出来的行收掉">整理空行</button>
           </div>
           <div className="set-row">
             <label>数据</label>

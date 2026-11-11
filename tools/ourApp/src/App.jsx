@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { MEMBERS, deleteTask, toggleDuty, updateTask, updateMilestone, removeMilestones } from './model/board'
+import { MEMBERS, deleteTask, toggleDuty, updateTask, updateMilestone, removeMilestones, repackAll } from './model/board'
 import { useBoard } from './state/useBoard'
 import Timeline from './components/Timeline'
 import DutyZone from './components/DutyZone'
@@ -23,6 +23,8 @@ export default function App() {
   const [hover, setHover] = useState(null)
   const [markSel, setMarkSel] = useState(() => new Set())
   const [markEdit, setMarkEdit] = useState(null)
+  const [toast, setToast] = useState(null)
+  const toastTimer = useRef(null)
   const [theme, setTheme] = useState(() => localStorage.getItem('ourApp.theme') || 'light')
   const [settings, setSettings] = useState(() => {
     try {
@@ -69,6 +71,7 @@ export default function App() {
         setSelection(new Set())
         setMarkSel(new Set())
         setHover(null)
+        flash(`已删除 ${ids.length + mids.length} 项 · Ctrl+Z 撤销`)
         return
       }
       if (e.key === 'Escape') { setSelection(new Set()); setMarkSel(new Set()); setHover(null); setMarkEdit(null) }
@@ -87,6 +90,12 @@ export default function App() {
     document.addEventListener('pointerdown', onDown, true)
     return () => document.removeEventListener('pointerdown', onDown, true)
   }, [markEdit])
+
+  const flash = useCallback((msg) => {
+    setToast(msg)
+    clearTimeout(toastTimer.current)
+    toastTimer.current = setTimeout(() => setToast(null), 3600)
+  }, [])
 
   const openTask = useCallback((id, el) => {
     clearTimeout(hideTimer.current)
@@ -147,6 +156,7 @@ export default function App() {
   const batchDelete = () => {
     commit((b) => ids.reduce((acc, id) => deleteTask(acc, id), b))
     setSelection(new Set())
+    flash(`已删除 ${ids.length} 项 · Ctrl+Z 撤销`)
   }
 
   return (
@@ -159,6 +169,7 @@ export default function App() {
         setSettings={setSettings}
         theme={theme}
         setTheme={setTheme}
+        onTidy={() => { commit((b) => repackAll(b)); flash('已整理空行') }}
         onExport={exportJson}
         onImport={importJson}
       />
@@ -185,6 +196,8 @@ export default function App() {
           ))}
         </div>
       </section>
+
+      {toast && <div className="toast">{toast}</div>}
 
       {selection.size > 0 && (
         <BatchBar
